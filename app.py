@@ -87,10 +87,8 @@ st.markdown("""
 
 # --- 4. MAIN UI CONTENT ---
 
-# Title
 st.markdown('<div class="main-title">Crop Disease Detection System</div>', unsafe_allow_html=True)
 
-# Intro Text
 st.markdown("""
     <div class="intro-text">
         A machine learning approach for detecting crop diseases, upload a clear photo of 
@@ -98,12 +96,45 @@ st.markdown("""
     </div>
     """, unsafe_allow_html=True)
 
-# Spacing to center uploader
-st.write("##")
 st.write("##")
 
-# Model Logic
+# Load logic
 model = load_trained_model()
+category_names = []
 try:
     with open('class_indices.json', 'r') as f:
-        class
+        indices_data = json.load(f)
+    category_names = list(indices_data.values())
+except Exception:
+    category_names = []
+
+uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
+
+if uploaded_file:
+    image = Image.open(uploaded_file)
+    st.markdown('<div class="img-container">', unsafe_allow_html=True)
+    st.image(image, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    if st.button("RUN ANALYSIS", use_container_width=True):
+        if model is not None and len(category_names) > 0:
+            with st.spinner("Analyzing..."):
+                img_resized = image.resize((224, 224))
+                img_array = tf.keras.preprocessing.image.img_to_array(img_resized)
+                img_array = np.expand_dims(img_array, axis=0) / 255.0
+                predictions = model.predict(img_array)
+                result_label = category_names[np.argmax(predictions)]
+                
+                st.markdown(f'<div class="diagnosis-text">Status: {result_label}</div>', unsafe_allow_html=True)
+
+                if "healthy" not in result_label.lower():
+                    st.markdown(f"""
+                        <div class="management-popup">
+                            <h2 style='margin-top: 0; color: #d32f2f;'>🛡️ Management Strategies</h2>
+                            <hr>
+                            <p><b>Detected Disease:</b> {result_label}</p>
+                            <p><b>Recommended Actions:</b></p>
+                            <ul>
+                                <li><b>Pruning:</b> Remove infected leaves immediately to prevent spread.</li>
+                                <li><b>Treatment:</b> Apply organic fungicides like Neem oil or sulfur sprays.</li>
+                                <li><b>Sanitation:</b>
