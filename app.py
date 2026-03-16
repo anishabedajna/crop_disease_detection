@@ -27,49 +27,65 @@ def load_trained_model():
                 return None
     return tf.keras.models.load_model(MODEL_PATH)
 
-# --- 3. CUSTOM CSS ---
+# --- 3. CUSTOM CSS: THE "A TO Z" LOOK ---
 st.markdown("""
     <style>
+    /* Home Background */
     [data-testid="stAppViewContainer"] {
         background-image: url("https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=2000&auto=format&fit=crop");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
+
     [data-testid="stSidebar"] { display: none; }
-    .huge-title {
-        font-size: 70px;
-        font-weight: 900;
-        color: #ffffff;
-        text-shadow: 4px 4px 15px rgba(0,0,0,0.9);
+
+    /* The Central Black Box from Third Image */
+    .matching-overlay {
+        background: rgba(0, 0, 0, 0.82) !important;
+        padding: 40px;
+        border-radius: 15px;
+        max-width: 850px;
+        margin: auto;
         text-align: center;
-        width: 100%;
-        margin-top: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 30px;
     }
+
+    /* Green Button from Reference */
     .stButton>button {
-        border-radius: 50px !important;
+        border-radius: 4px !important;
         background-color: #28a745 !important;
         color: white !important;
         font-weight: bold !important;
-        width: 100%;
+        padding: 8px 20px !important;
+        border: none !important;
     }
-    .result-label {
-        color: #1E5128;
-        font-size: 32px;
-        font-weight: bold;
-        text-align: center;
-        margin-top: 25px;
-        background: rgba(255, 255, 255, 0.85);
-        padding: 15px;
-        border-radius: 15px;
+
+    /* White Image Border from Reference */
+    .img-border {
+        border: 8px solid white;
+        display: inline-block;
+        margin-bottom: 20px;
     }
+
+    /* Prediction Text */
+    .pred-text {
+        color: white;
+        font-size: 24px;
+        font-family: 'Segoe UI', sans-serif;
+        margin-top: 20px;
+    }
+
+    /* Safety Measures Box */
     .measures-box {
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         color: #1E5128;
         padding: 20px;
-        border-radius: 15px;
-        margin-top: 20px;
-        border-left: 10px solid #ff4b4b;
+        border-radius: 10px;
+        margin-top: 25px;
+        text-align: left;
+        border-left: 8px solid #ff4b4b;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -77,26 +93,31 @@ st.markdown("""
 # --- 4. NAVIGATION ---
 if 'page' not in st.session_state:
     st.session_state.page = 'Home'
-if 'last_result' not in st.session_state:
-    st.session_state.last_result = None
+if 'current_pred' not in st.session_state:
+    st.session_state.current_pred = None
 
-st.markdown('<h1 class="huge-title">Crop Disease Detector</h1>', unsafe_allow_html=True)
-
+# Navigation Header
 _, col1, col2, col3, _ = st.columns([1.5, 2, 2, 2, 1.5])
 with col1:
     if st.button("🏠 HOME"): st.session_state.page = 'Home'
 with col2:
-    if st.button("🔍 ANALYZE LEAF"): st.session_state.page = 'Detection'
+    if st.button("🔍 ANALYZE LEAF"): 
+        st.session_state.page = 'Detection'
+        st.session_state.current_pred = None
 with col3:
     if st.button("🛡️ MEASURES"): st.session_state.page = 'Measures'
 
-# --- 5. PAGE CONTENT ---
+# --- 5. PAGE LOGIC ---
 
 if st.session_state.page == 'Home':
-    st.markdown("<div style='text-align: center; color: white;'><h2>Welcome to AI-Powered Diagnosis</h2><p style='font-size: 20px;'>Upload a photo to see health status and safety measures.</p></div>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center; color:white; font-size:60px;'>CropCare AI</h1>", unsafe_allow_html=True)
 
 elif st.session_state.page == 'Detection':
+    # Switch to Lighter Background
     st.markdown("<style>[data-testid='stAppViewContainer'] { background-image: url('https://images.unsplash.com/photo-1501004318641-729e8e26bd05?q=80&w=2000&auto=format&fit=crop') !important; }</style>", unsafe_allow_html=True)
+    
+    st.markdown('<div class="matching-overlay">', unsafe_allow_html=True)
+    st.markdown("<h2 style='color:white;'>Leaf Disease Detection</h2>", unsafe_allow_html=True)
     
     model = load_trained_model()
     try:
@@ -104,46 +125,48 @@ elif st.session_state.page == 'Detection':
             class_indices = json.load(f)
         class_names = list(class_indices.values())
     except:
-        st.error("Missing class_indices.json")
         class_names = []
 
     uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
     
     if uploaded_file:
         image = Image.open(uploaded_file)
-        _, img_col, _ = st.columns([1, 2, 1])
-        with img_col:
-            st.image(image, caption='Target Leaf', use_container_width=True)
+        st.markdown("<p style='color:white; font-size:20px;'>Original Image</p>", unsafe_allow_html=True)
         
-        if st.button("RUN AI DIAGNOSIS"):
+        # Center the white-bordered image
+        st.markdown('<div class="img-border">', unsafe_allow_html=True)
+        st.image(image, width=300)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        if st.button("Predict Leaf Disease"):
             with st.spinner("Analyzing..."):
                 img = image.resize((224, 224))
                 img_array = tf.keras.preprocessing.image.img_to_array(img)
                 img_array = np.expand_dims(img_array, axis=0) / 255.0
                 preds = model.predict(img_array)
-                st.session_state.last_result = class_names[np.argmax(preds)]
-                st.balloons()
-
-        if st.session_state.last_result:
-            st.markdown(f'<div class="result-label">Diagnosis: {st.session_state.last_result}</div>', unsafe_allow_html=True)
+                st.session_state.current_pred = class_names[np.argmax(preds)]
+        
+        if st.session_state.current_pred:
+            st.markdown(f'<div class="pred-text">Predicted Disease: {st.session_state.current_pred}</div>', unsafe_allow_html=True)
             
-            # --- DYNAMIC SAFETY MEASURES LOGIC ---
-            if "healthy" in st.session_state.last_result.lower():
-                st.success("✨ This leaf is Healthy! No safety measures required. Keep up the good work!")
+            # Smart Safety Measures Logic
+            if "healthy" in st.session_state.current_pred.lower():
+                st.success("✨ This leaf is healthy! No safety measures needed.")
             else:
                 st.markdown(f"""
                 <div class="measures-box">
-                    <h3>🛡️ Safety Measures for {st.session_state.last_result}</h3>
+                    <h3 style='color:#d9534f;'>🚨 Safety Measures for {st.session_state.current_pred}</h3>
                     <ul>
-                        <li><b>Isolate:</b> Remove this plant from others immediately to stop the spread.</li>
-                        <li><b>Treatment:</b> Apply appropriate organic fungicides or pesticides.</li>
-                        <li><b>Sanitation:</b> Sterilize all tools used on this plant.</li>
-                        <li><b>Pruning:</b> Cut off the infected leaves and destroy them (do not compost).</li>
+                        <li><b>Isolate:</b> Move the plant away from healthy ones.</li>
+                        <li><b>Pruning:</b> Cut off and burn the infected leaves.</li>
+                        <li><b>Sanitation:</b> Clean your hands and tools after touching the plant.</li>
+                        <li><b>Organic Spray:</b> Use a Neem oil or copper-based fungicide.</li>
                     </ul>
-                    <p style='font-size: 14px;'><i>Note: Visit the 'Measures' page for more general farming tips.</i></p>
                 </div>
                 """, unsafe_allow_html=True)
 
+    st.markdown('</div>', unsafe_allow_html=True)
+
 elif st.session_state.page == 'Measures':
     st.markdown("<style>[data-testid='stAppViewContainer'] { background-image: url('https://images.unsplash.com/photo-1501004318641-729e8e26bd05?q=80&w=2000&auto=format&fit=crop') !important; }</style>", unsafe_allow_html=True)
-    st.markdown("<div style='color: #1E5128; text-align: center;'><h2>🛡️ General Farming Safety</h2><p>Always maintain soil health and tool hygiene to prevent future outbreaks.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center;'><h2>🛡️ General Prevention</h2><p>Proper spacing and soil health are key to avoiding disease.</p></div>", unsafe_allow_html=True)
