@@ -6,8 +6,9 @@ import os
 import urllib.request
 import json
 
-# --- 1. CONFIG & MODEL ---
-# NOTE: Ensure your plant_disease_model.h5 is in the SAME folder on GitHub as this app.py
+# --- 1. CONFIG & PERMANENT RELEASE LINK ---
+# Direct download link from your GitHub Release v1
+MODEL_URL = "https://github.com/anishabedajna/crop_disease_detection/releases/download/v1/plant_disease_model.h5"
 MODEL_PATH = "plant_disease_model.h5"
 
 st.set_page_config(page_title="Crop Disease Detection", page_icon="🌾", layout="centered")
@@ -18,7 +19,7 @@ st.markdown("""
     .stApp { background-color: #fcfdfc; }
     .main-title { 
         color: #1E5128; 
-        font-family: 'Segoe UI', sans-serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         text-align: center;
         font-size: 35px;
         font-weight: bold;
@@ -39,6 +40,7 @@ st.markdown("""
     .stButton>button:hover {
         background-color: #4E9F3D;
         color: white;
+        border: none;
     }
     .report-box {
         padding: 25px;
@@ -50,25 +52,34 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. LOADING LOGIC ---
+# --- 3. BACKGROUND LOADING LOGIC ---
 @st.cache_resource
 def load_trained_model():
-    if not os.path.exists(MODEL_PATH):
-        # If model is not found, we show an error instead of using an expired link
-        st.error(f"Model file '{MODEL_PATH}' not found in the repository. Please ensure it is uploaded to GitHub.")
-        return None
+    # Check if the file is missing or is an empty LFS pointer (<1MB)
+    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
+        with st.spinner("📥 Downloading AI Model (547MB)... This takes 3-5 minutes. Please wait."):
+            try:
+                # Add headers to ensure GitHub accepts the request
+                opener = urllib.request.build_opener()
+                opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+                urllib.request.install_opener(opener)
+                urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+                st.success("✅ Download complete! Loading model into memory...")
+            except Exception as e:
+                st.error(f"Download failed: {e}")
+                return None
     return tf.keras.models.load_model(MODEL_PATH)
 
-# Load data files
+# Load the model
 model = load_trained_model()
 
-# Load class names
+# Load class names from JSON
 try:
     with open('class_indices.json', 'r') as f:
         class_indices = json.load(f)
     class_names = list(class_indices.values())
 except Exception as e:
-    st.warning("Could not load class_indices.json. Make sure it's in your GitHub.")
+    st.error("Error: 'class_indices.json' not found. Please upload it to GitHub.")
     class_names = []
 
 # --- 4. USER INTERFACE ---
@@ -76,7 +87,7 @@ st.markdown('<p class="main-title">A Machine Learning Approach for Crop Disease 
 
 st.write("") 
 st.markdown("""
-**Empowering farmers with instant AI diagnosis.** Upload a photo of a crop leaf below to get a precise diagnosis and management steps.
+**Empowering farmers with instant AI diagnosis.** Manual detection is slow and often inaccurate. Use this tool to get a precise diagnosis and take immediate action to protect your yield.
 """)
 
 uploaded_file = st.file_uploader("📸 Upload or drag a leaf photo here", type=["jpg", "jpeg", "png"])
@@ -111,13 +122,14 @@ if uploaded_file is not None:
                         <ul>
                             <li><b>Isolate:</b> Prevent the spread of <b>{result}</b> by separating affected crops.</li>
                             <li><b>Monitoring:</b> Check surrounding plants for similar early symptoms.</li>
-                            <li><b>Treatment:</b> Apply appropriate controls specifically for {result}.</li>
+                            <li><b>Treatment:</b> Apply appropriate organic or chemical controls specifically for {result}.</li>
                             <li><b>Sanitation:</b> Clean all farming tools used on the infected plant.</li>
                         </ul>
                     </div>
                 """, unsafe_allow_html=True)
+                st.balloons()
         else:
-            st.error("Model or class indices missing. Please check your GitHub files.")
+            st.error("System Error: Model could not be loaded. Check your logs.")
 
 st.markdown("---")
 st.caption("A Machine Learning Approach for Crop Disease Management © 2026")
