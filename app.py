@@ -10,13 +10,13 @@ import json
 MODEL_URL = "https://github.com/anishabedajna/crop_disease_detection/releases/download/v1/plant_disease_model.h5"
 MODEL_PATH = "plant_disease_model.h5"
 
-st.set_page_config(page_title="Crop Disease Detector", page_icon="🌿", layout="wide")
+st.set_page_config(page_title="Crop Disease Detection System", page_icon="🌿", layout="wide")
 
 # --- 2. CACHED MODEL LOADING ---
 @st.cache_resource
 def load_trained_model():
     if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
-        with st.spinner("🚀 Initializing AI Engine..."):
+        with st.spinner("🚀 Initializing AI Brain..."):
             try:
                 opener = urllib.request.build_opener()
                 opener.addheaders = [('User-agent', 'Mozilla/5.0')]
@@ -27,97 +27,81 @@ def load_trained_model():
                 return None
     return tf.keras.models.load_model(MODEL_PATH)
 
-# --- 3. CUSTOM CSS: THE "A TO Z" LOOK ---
+# --- 3. CUSTOM CSS ---
 st.markdown("""
     <style>
-    /* Home Background */
-    [data-testid="stAppViewContainer"] {
-        background-image: url("https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=2000&auto=format&fit=crop");
+    /* Home Page Dark Background */
+    .stApp {
+        background-image: url("https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2026&auto=format&fit=crop");
         background-size: cover;
         background-position: center;
-        background-attachment: fixed;
     }
 
-    [data-testid="stSidebar"] { display: none; }
-
-    /* The Central Black Box from Third Image */
-    .matching-overlay {
-        background: rgba(0, 0, 0, 0.82) !important;
-        padding: 40px;
-        border-radius: 15px;
-        max-width: 850px;
-        margin: auto;
-        text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-top: 30px;
-    }
-
-    /* Green Button from Reference */
-    .stButton>button {
-        border-radius: 4px !important;
-        background-color: #28a745 !important;
-        color: white !important;
-        font-weight: bold !important;
-        padding: 8px 20px !important;
+    /* Remove Black Boxes */
+    [data-testid="stVerticalBlock"] > div > div > div > div > div {
+        background: rgba(0,0,0,0) !important;
         border: none !important;
     }
 
-    /* White Image Border from Reference */
-    .img-border {
-        border: 8px solid white;
-        display: inline-block;
-        margin-bottom: 20px;
+    /* Title Styling: Top, Centered, Underlined */
+    .main-title {
+        text-align: center;
+        color: white;
+        font-size: 50px;
+        font-weight: bold;
+        text-decoration: underline;
+        margin-top: -50px;
+        padding-bottom: 20px;
     }
 
-    /* Prediction Text */
-    .pred-text {
+    /* Navigation Buttons */
+    .stButton>button {
+        border-radius: 5px !important;
+        background-color: #28a745 !important;
+        color: white !important;
+        font-weight: bold !important;
+        border: 1px solid white !important;
+    }
+    
+    /* Result Text Styling */
+    .result-text {
         color: white;
         font-size: 24px;
-        font-family: 'Segoe UI', sans-serif;
+        text-align: center;
+        font-weight: bold;
         margin-top: 20px;
     }
 
-    /* Safety Measures Box */
-    .measures-box {
-        background: rgba(255, 255, 255, 0.95);
+    /* Measures Box */
+    .measures-container {
+        background: rgba(255, 255, 255, 0.9);
         color: #1E5128;
-        padding: 20px;
-        border-radius: 10px;
-        margin-top: 25px;
-        text-align: left;
-        border-left: 8px solid #ff4b4b;
+        padding: 30px;
+        border-radius: 15px;
+        border-left: 10px solid #28a745;
+        margin-top: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. NAVIGATION ---
+# --- 4. SESSION STATE & NAVIGATION ---
 if 'page' not in st.session_state:
     st.session_state.page = 'Home'
-if 'current_pred' not in st.session_state:
-    st.session_state.current_pred = None
+if 'prediction' not in st.session_state:
+    st.session_state.prediction = None
 
-# Navigation Header
-_, col1, col2, col3, _ = st.columns([1.5, 2, 2, 2, 1.5])
-with col1:
+# Centered Nav Bar
+_, n1, n2, _ = st.columns([2, 1, 1, 2])
+with n1:
     if st.button("🏠 HOME"): st.session_state.page = 'Home'
-with col2:
-    if st.button("🔍 ANALYZE LEAF"): 
-        st.session_state.page = 'Detection'
-        st.session_state.current_pred = None
-with col3:
-    if st.button("🛡️ MEASURES"): st.session_state.page = 'Measures'
+with n2:
+    if st.button("🛡️ MANAGEMENT"): st.session_state.page = 'Management'
 
 # --- 5. PAGE LOGIC ---
 
+# --- PAGE: HOME (Detection) ---
 if st.session_state.page == 'Home':
-    st.markdown("<h1 style='text-align:center; color:white; font-size:60px;'>CropCare AI</h1>", unsafe_allow_html=True)
-
-elif st.session_state.page == 'Detection':
-    # Switch to Lighter Background
-    st.markdown("<style>[data-testid='stAppViewContainer'] { background-image: url('https://images.unsplash.com/photo-1501004318641-729e8e26bd05?q=80&w=2000&auto=format&fit=crop') !important; }</style>", unsafe_allow_html=True)
-    
-    st.markdown('<div class="matching-overlay">', unsafe_allow_html=True)
-    st.markdown("<h2 style='color:white;'>Leaf Disease Detection</h2>", unsafe_allow_html=True)
+    st.markdown('<div class="main-title">Crop Disease Detection System</div>', unsafe_allow_html=True)
     
     model = load_trained_model()
     try:
@@ -131,12 +115,12 @@ elif st.session_state.page == 'Detection':
     
     if uploaded_file:
         image = Image.open(uploaded_file)
-        st.markdown("<p style='color:white; font-size:20px;'>Original Image</p>", unsafe_allow_html=True)
-        
-        # Center the white-bordered image
-        st.markdown('<div class="img-border">', unsafe_allow_html=True)
-        st.image(image, width=300)
-        st.markdown('</div>', unsafe_allow_html=True)
+        _, img_col, _ = st.columns([1, 1.5, 1])
+        with img_col:
+            # White border effect from reference
+            st.markdown('<div style="border: 8px solid white; display: inline-block;">', unsafe_allow_html=True)
+            st.image(image, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
         
         if st.button("Predict Leaf Disease"):
             with st.spinner("Analyzing..."):
@@ -144,29 +128,43 @@ elif st.session_state.page == 'Detection':
                 img_array = tf.keras.preprocessing.image.img_to_array(img)
                 img_array = np.expand_dims(img_array, axis=0) / 255.0
                 preds = model.predict(img_array)
-                st.session_state.current_pred = class_names[np.argmax(preds)]
+                st.session_state.prediction = class_names[np.argmax(preds)]
         
-        if st.session_state.current_pred:
-            st.markdown(f'<div class="pred-text">Predicted Disease: {st.session_state.current_pred}</div>', unsafe_allow_html=True)
-            
-            # Smart Safety Measures Logic
-            if "healthy" in st.session_state.current_pred.lower():
-                st.success("✨ This leaf is healthy! No safety measures needed.")
-            else:
-                st.markdown(f"""
-                <div class="measures-box">
-                    <h3 style='color:#d9534f;'>🚨 Safety Measures for {st.session_state.current_pred}</h3>
+        if st.session_state.prediction:
+            st.markdown(f'<div class="result-text">Predicted Disease: {st.session_state.prediction}</div>', unsafe_allow_html=True)
+
+# --- PAGE: MANAGEMENT (Dynamic Measures) ---
+elif st.session_state.page == 'Management':
+    # Light Leaf Background for this page
+    st.markdown("""
+        <style>
+        .stApp {
+            background-image: url("https://images.unsplash.com/photo-1501004318641-729e8e26bd05?q=80&w=2000&auto=format&fit=crop") !important;
+        }
+        h2, h3, p, li { color: #1E5128 !important; }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("<h2 style='text-align: center;'>Management & Preventive Measures</h2>", unsafe_allow_html=True)
+
+    if st.session_state.prediction:
+        if "healthy" in st.session_state.prediction.lower():
+            st.success(f"✅ The leaf is identified as **{st.session_state.prediction}**. It is a healthy leaf; no preventive measures are required at this time.")
+        else:
+            st.markdown(f"""
+                <div class="measures-container">
+                    <h3>🛡️ Safety Measures for {st.session_state.prediction}</h3>
+                    <p>Based on the AI diagnosis, please follow these steps to save your crop:</p>
                     <ul>
-                        <li><b>Isolate:</b> Move the plant away from healthy ones.</li>
-                        <li><b>Pruning:</b> Cut off and burn the infected leaves.</li>
-                        <li><b>Sanitation:</b> Clean your hands and tools after touching the plant.</li>
-                        <li><b>Organic Spray:</b> Use a Neem oil or copper-based fungicide.</li>
+                        <li><b>Quarantine:</b> Immediately remove and isolate the infected plant to prevent spores from spreading.</li>
+                        <li><b>Organic Treatment:</b> Apply Neem Oil or a copper-based fungicide to the affected areas.</li>
+                        <li><b>Pruning:</b> Cut off the diseased leaves using sterilized tools and destroy them (do not compost).</li>
+                        <li><b>Watering:</b> Avoid overhead watering; water the soil directly to keep leaves dry.</li>
                     </ul>
                 </div>
-                """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+    else:
+        st.info("⚠️ No diagnosis found. Please go to the Home page and upload a leaf image first.")
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
-elif st.session_state.page == 'Measures':
-    st.markdown("<style>[data-testid='stAppViewContainer'] { background-image: url('https://images.unsplash.com/photo-1501004318641-729e8e26bd05?q=80&w=2000&auto=format&fit=crop') !important; }</style>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align:center;'><h2>🛡️ General Prevention</h2><p>Proper spacing and soil health are key to avoiding disease.</p></div>", unsafe_allow_html=True)
+# Footer
+st.markdown("<p style='text-align: center; color: white; margin-top: 50px;'>A Machine Learning Approach for Crop Disease Management © 2026</p>", unsafe_allow_html=True)
