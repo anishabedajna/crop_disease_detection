@@ -10,7 +10,7 @@ import json
 MODEL_URL = "https://github.com/anishabedajna/crop_disease_detection/releases/download/v1/plant_disease_model.h5"
 MODEL_PATH = "plant_disease_model.h5"
 
-st.set_page_config(page_title="Plant Disease Detection App", page_icon="🌿", layout="centered")
+st.set_page_config(page_title="Leaf Disease Detection", page_icon="🌿", layout="centered")
 
 # --- 2. CACHED MODEL LOADING ---
 @st.cache_resource
@@ -18,7 +18,6 @@ def load_trained_model():
     if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
         with st.spinner("🚀 Initializing System..."):
             try:
-                # Add headers to avoid bot detection during model download
                 opener = urllib.request.build_opener()
                 opener.addheaders = [('User-agent', 'Mozilla/5.0')]
                 urllib.request.install_opener(opener)
@@ -28,198 +27,129 @@ def load_trained_model():
                 return None
     return tf.keras.models.load_model(MODEL_PATH)
 
-# --- 3. CUSTOM CSS (STYLING & VISIBILITY FIXES) ---
+# --- 3. CUSTOM CSS (STRICT STYLE REPLICATION) ---
 st.markdown("""
     <style>
-    /* New Light Green Background from Second Reference */
+    /* Background from reference */
     .stApp {
-        background-color: #f1f8e9;
-        background-image: url("https://images.unsplash.com/photo-1599676648316-29a32c668914?q=80&w=2000&auto=format&fit=crop");
+        background-image: url("https://images.unsplash.com/photo-1501004318641-729e8e26bd05?q=80&w=2000&auto=format&fit=crop");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
-    
-    /* Clean up the main content container */
-    [data-testid="stVerticalBlock"] > div > div > div > div > div {
-        background: rgba(0,0,0,0) !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding-top: 0px !important;
-    }
 
-    /* 1. Title: Large, Dark Green, Underlined */
-    .main-title {
-        text-align: center;
-        color: #1b5e20; /* Dark Green */
-        font-size: 60px; /* Big Size */
-        font-weight: bold;
-        text-decoration: underline;
-        margin-top: -60px;
-        padding-bottom: 30px;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-    }
-
-    /* 2. Smaller Drag & Drop and Upload Info Text */
-    div.stFileUploader > div > div > div > label {
-        font-size: 14px !important;
-        color: #555555;
-    }
-    
-    /* Small info text below the title */
-    .intro-text {
-        text-align: center;
-        color: #1b5e20;
-        font-size: 17px;
-        margin-top: -15px;
-        padding-bottom: 40px;
-        max-width: 650px;
-        margin-left: auto;
-        margin-right: auto;
-        line-height: 1.5;
-    }
-
-    /* 3. Result Label Styling (Visibility) */
-    .diagnosis-label {
+    /* Main Container: Dark Translucent Overlay as seen in Screenshot (42) */
+    .main-container {
+        background: rgba(0, 0, 0, 0.75);
+        padding: 40px;
+        border-radius: 15px;
         color: white;
-        font-size: 28px;
-        font-weight: bold;
         text-align: center;
-        margin-top: 25px;
-        background-color: #1b5e20;
-        padding: 10px;
-        border-radius: 8px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    /* 4. RUN ANALYSIS Button (Visibility Check) */
+    /* Large Underlined Title */
+    .title-text {
+        font-size: 42px;
+        font-weight: bold;
+        color: white;
+        margin-bottom: 10px;
+        text-decoration: underline;
+    }
+
+    /* Intro Phrasing */
+    .intro-text {
+        font-size: 18px;
+        color: #e0e0e0;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    /* Predict Button Styling */
     .stButton>button {
-        width: 100% !important;
         background-color: #28a745 !important;
         color: white !important;
         font-weight: bold !important;
-        border: 1px solid white !important;
-        font-size: 18px !important;
-    }
-    .stButton>button:hover {
-        background-color: white !important;
-        color: #28a745 !important;
-        border: 1px solid #28a745 !important;
+        border: none !important;
+        padding: 10px 24px !important;
+        border-radius: 5px !important;
+        width: 100%;
     }
 
-    /* Clean Image Container */
-    .img-container {
-        border: 10px solid white;
-        margin-top: 20px;
-        margin-bottom: 20px;
+    /* Management Card styling */
+    .management-card {
+        background: rgba(255, 255, 255, 0.95);
+        color: #1b5e20;
+        text-align: left;
+        padding: 25px;
+        border-radius: 10px;
+        margin-top: 30px;
+        border-left: 10px solid #d32f2f;
     }
 
-    /* 5. Strategy Container (Bullet Point Setup, removed boxes) */
-    .strategy-card {
-        background-color: rgba(255, 255, 255, 0.95);
-        border-radius: 12px;
-        padding: 30px;
-        margin-top: 20px;
-        color: #1E5128;
-        border-left: 10px solid #28a745;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    .strategy-card h3 {
-        color: #d9534f; /* Red-ish for disease alert */
-        margin-top: 0;
-    }
-    
-    /* Clean Bullet Points for Management Strategies */
-    .strategy-list {
-        list-style-type: disc;
-        margin-left: 20px;
-        line-height: 1.8;
-    }
-    .strategy-list li {
-        margin-bottom: 10px;
-        font-size: 16px;
-    }
-
-    /* Hide Streamlit default elements */
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
 # --- 4. MAIN UI CONTENT ---
+st.markdown('<div class="main-container">', unsafe_allow_html=True)
 
-# The Big, Dark Green, Underlined Title
-st.markdown('<div class="main-title">Plant Disease Detection App</div>', unsafe_allow_html=True)
+st.markdown('<div class="title-text">Leaf Disease Detection</div>', unsafe_allow_html=True)
 
-# Spaced Info Text (removed "AI" term)
 st.markdown("""
     <div class="intro-text">
-        Upload one or more plant leaf images below for analysis. This system uses a 
-        machine learning approach to detect potential diseases and provide immediate, 
-        bullet-point management strategies.
+        A machine learning approach for detecting crop diseases, upload a clear photo of 
+        a plant leaf below to analyze its health and receive immediate management strategies.
     </div>
     """, unsafe_allow_html=True)
 
-# Load logic
+# Spacing
+st.write("---")
+
 model = load_trained_model()
 try:
     with open('class_indices.json', 'r') as f:
-        class_indices = json.load(f)
-    class_names = list(class_indices.values())
-except Exception:
+        class_names = list(json.load(f).values())
+except:
     class_names = []
 
-# Centered Spacing
-st.write("##")
-
-# File Uploader (Text is smaller and centered)
 uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
     image = Image.open(uploaded_file)
+    st.markdown('<p style="font-size: 20px; font-weight: bold;">Original Image</p>', unsafe_allow_html=True)
+    st.image(image, width=350)
     
-    # Original Image display with white border container
-    _, center_img, _ = st.columns([1, 3, 1])
-    with center_img:
-        st.markdown('<div class="img-container">', unsafe_allow_html=True)
-        st.image(image, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Run Analysis Button (with visible text)
-    if st.button("🔍 RUN DISEASE ANALYSIS"):
-        if model is not None and len(class_names) > 0:
-            with st.spinner("Analyzing leaf patterns..."):
-                img = image.resize((224, 224))
-                img_array = tf.keras.preprocessing.image.img_to_array(img)
-                img_array = np.expand_dims(img_array, axis=0) / 255.0
-                preds = model.predict(img_array)
-                # Ensure the predicted name is handled properly if it has spaces or is "healthy"
-                result = class_names[np.argmax(preds)]
-                
-                # Show Diagnosis Label (Highly Visible)
-                st.markdown(f'<div class="diagnosis-label">Result: {result}</div>', unsafe_allow_html=True)
+    if st.button("Predict Leaf Disease"):
+        with st.spinner("Analyzing..."):
+            # Model Processing
+            img = image.resize((224, 224))
+            img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
+            img_array = np.expand_dims(img_array, axis=0)
+            
+            preds = model.predict(img_array)
+            result = class_names[np.argmax(preds)]
+            
+            # Result Label
+            st.markdown(f'<h2 style="color:white;">Predicted Disease: {result}</h2>', unsafe_allow_html=True)
 
-                # DYNAMIC MANAGEMENT SECTION
-                if "healthy" in result.lower():
-                    st.balloons()
-                    st.success("🌱 Great! The leaf is identified as **Healthy**. No management action or treatment is required.")
-                else:
-                    # DYNAMIC BULLET POINTS FOR DISEASED LEAVES
-                    st.markdown(f"""
-                        <div class="strategy-card">
-                            <h3 style='margin-bottom: 10px;'>🛡️ Immediate Management for {result}</h3>
-                            <p style='font-size: 16px; margin-bottom: 20px;'>
-                                To protect your harvest from the spread of this infection, take the following actions:
-                            </p>
-                            <hr style="border: 0.5px solid #28a745;">
-                            <ul class="strategy-list">
-                                <li><b>Pruning:</b> Remove the infected leaves immediately and destroy them (do not compost).</li>
-                                <li><b>Treatment:</b> Spray organic or chemical fungicides like Neem oil or a sulfur-based solution.</li>
-                                <li><b>Sanitation:</b> Sterilize all tools, like pruning shears, used near the infected plant.</li>
-                                <li><b>Airflow:</b> Increase plant spacing or thin out leaves to improve air circulation and reduce humidity.</li>
-                            </ul>
-                            <p style='font-style: italic; font-size: 14px; margin-top: 20px; color: #555;'>Check the rest of your crop daily for signs of similar symptoms.</p>
-                        </div>
-                    """, unsafe_allow_html=True)
-        else:
-            st.error("Model or class names could not be initialized.")
+            # --- CONDITIONAL MANAGEMENT ---
+            # Measures only "pop up" if NOT healthy
+            if "healthy" not in result.lower():
+                st.markdown(f"""
+                    <div class="management-card">
+                        <h3 style="color: #d32f2f; margin-top: 0;">🛡️ Management Measures</h3>
+                        <p>Measures for <b>{result}</b>:</p>
+                        <ul style="line-height: 1.8;">
+                            <li><b>Pruning:</b> Remove and destroy infected leaves.</li>
+                            <li><b>Treatment:</b> Apply Neem oil or recommended fungicides.</li>
+                            <li><b>Isolation:</b> Keep infected plants away from healthy ones.</li>
+                            <li><b>Sanitation:</b> Clean tools after handling diseased foliage.</li>
+                        </ul>
+                    </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.balloons()
+                st.success("The leaf is healthy! No management measures needed.")
+
+st.markdown('</div>', unsafe_allow_html=True)
