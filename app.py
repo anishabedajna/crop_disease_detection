@@ -55,9 +55,55 @@ st.markdown("""
         background: rgba(0,0,0,0.4);
         padding: 20px;
         border-radius: 12px;
-        font-style: italic;
     }
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    .
+    .img-container {
+        border: 8px solid white;
+        border-radius: 4px;
+        margin: 20px auto;
+    }
+    .management-popup {
+        background: rgba(255, 255, 255, 0.98);
+        color: #1b5e20;
+        padding: 25px;
+        border-radius: 15px;
+        border-left: 10px solid #d32f2f;
+        margin-top: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .diagnosis-text {
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        background: rgba(0,0,0,0.6);
+        padding: 12px;
+        border-radius: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- 4. MAIN UI CONTENT ---
+
+# Title
+st.markdown('<div class="main-title">Crop Disease Detection System</div>', unsafe_allow_html=True)
+
+# Intro Text
+st.markdown("""
+    <div class="intro-text">
+        A machine learning approach for detecting crop diseases, upload a clear photo of 
+        a plant leaf below to analyze its health and receive immediate management strategies.
+    </div>
+    """, unsafe_allow_html=True)
+
+# Spacing to center uploader
+st.write("##")
+st.write("##")
+
+# Model Logic
+model = load_trained_model()
+try:
+    with open('class_indices.json', 'r') as f:
+        class
