@@ -1,134 +1,115 @@
 import streamlit as st
 import tensorflow as tf
-from PIL import Image
 import numpy as np
+from PIL import Image
+import os
+import urllib.request
 import json
 
-# --- 1. PAGE CONFIGURATION ---
-st.set_page_config(
-    page_title="Crop Disease Detection",
-    page_icon="🌿",
-    layout="wide"
-)
+# --- 1. CONFIG & MODEL LINK ---
+# PASTE YOUR LINK BELOW
+MODEL_URL = "https://release-assets.githubusercontent.com/github-production-release-asset/1183591133/f1a78a68-4140-4cf0-8e8c-bc74da1572ce?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-03-16T20%3A22%3A34Z&rscd=attachment%3B+filename%3Dplant_disease_model.h5&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-03-16T19%3A21%3A41Z&ske=2026-03-16T20%3A22%3A34Z&sks=b&skv=2018-11-09&sig=V4VIO2%2BHIA7dpfIRaaPvygjHIgAz7Q9MfTWFP3tvP4k%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc3MzY5MzM0OCwibmJmIjoxNzczNjg5NzQ4LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ._zHWLIUVwJhuWhKWz8PkcxVZj78-bVO6dvdzad2XkOk&response-content-disposition=attachment%3B%20filename%3Dplant_disease_model.h5&response-content-type=application%2Foctet-stream" 
+MODEL_PATH = "plant_disease_model.h5"
 
-# --- 2. EMBEDDED CSS STYLING ---
+st.set_page_config(page_title="Crop Disease Detection", page_icon="🌾", layout="centered")
+
+# --- 2. PROFESSIONAL CSS STYLING ---
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .stAlert { border-radius: 10px; }
-    footer {visibility: hidden;}
-    .footer-text {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        background-color: white;
-        color: #6c757d;
+    .stApp { background-color: #fcfdfc; }
+    h1 { 
+        color: #1E5128; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         text-align: center;
-        padding: 10px;
-        font-size: 14px;
-        border-top: 1px solid #e9ecef;
-        z-index: 100;
+        border-bottom: 2px solid #4E9F3D;
+        padding-bottom: 10px;
+    }
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px;
+        height: 3.5em;
+        background-color: #1E5128;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        border: none;
+        box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    }
+    .stButton>button:hover {
+        background-color: #4E9F3D;
+        color: white;
+    }
+    .report-box {
+        padding: 25px;
+        border-radius: 12px;
+        background-color: #ffffff;
+        border-left: 10px solid #4E9F3D;
+        box-shadow: 0px 8px 16px rgba(0,0,0,0.05);
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. ASSET LOADING (Model & Classes) ---
+# --- 3. BACKGROUND LOGIC ---
 @st.cache_resource
-def load_assets():
-    # Load Model with the specific filename you provided
-    model = tf.keras.models.load_model('plant_disease_model.h5', compile=False)
-    
-    # Load Class Indices
-    try:
-        with open('class_indices.json', 'r') as f:
-            class_dict = json.load(f)
-        # Sort by index value to ensure correct label mapping
-        class_names = [k for k, v in sorted(class_dict.items(), key=lambda item: item[1])]
-    except Exception:
-        # Fallback labels if JSON is missing
-        class_names = ['Healthy Cotton', 'Diseased Cotton', 'Healthy Tomato', 'Tomato Bacterial Spot']
-        
-    return model, class_names
+def load_model():
+    if not os.path.exists(MODEL_PATH):
+        with st.spinner("📥 Downloading AI Brain... This may take a moment due to file size."):
+            urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+    return tf.keras.models.load_model(MODEL_PATH)
 
+# Load data files
 try:
-    model, CLASS_NAMES = load_assets()
+    model = load_model()
+    with open('class_indices.json', 'r') as f:
+        class_indices = json.load(f)
+    class_names = list(class_indices.values())
 except Exception as e:
-    st.error(f"⚠️ Error: Ensure 'plant_disease_model.h5' and 'class_indices.json' are in the same folder as this script.")
+    st.error(f"System Error: {e}")
 
-# --- 4. REMEDY KNOWLEDGE BASE ---
-REMEDIES = {
-    'Healthy Cotton': "Your cotton plant looks healthy! Keep maintaining proper irrigation and nitrogen levels.",
-    'Diseased Cotton': "Possible Fungal Infection. Action: Remove infected leaves and apply a copper-based fungicide or neem oil.",
-    'Healthy Tomato': "The tomato leaf is in great condition. Ensure consistent sunlight and avoid watering the leaves directly.",
-    'Tomato Bacterial Spot': "Bacterial Spot detected. Action: Use copper-based sprays, avoid overhead irrigation, and rotate crops next season."
-}
+# --- 4. USER INTERFACE ---
+st.title("A Machine Learning Approach for Crop Disease Detection and Management")
 
-# --- 5. MAIN UI HEADER ---
-st.title("🌿 Crop Disease Detection System")
-st.markdown("##### *A Machine Learning Approach for Detecting Crop Disease*")
-st.write("---")
-
-col1, col2 = st.columns([1, 1], gap="large")
-
-with col1:
-    st.header("📸 Image Upload")
-    uploaded_file = st.file_uploader("Upload a leaf image (JPG/PNG)", type=["jpg", "jpeg", "png"])
-    
-    if uploaded_file:
-        image = Image.open(uploaded_file)
-        st.image(image, caption='Captured Leaf Image', use_column_width=True)
-
-with col2:
-    st.header("🔍 Diagnostic Analysis")
-    
-    if uploaded_file is not None:
-        with st.spinner("Model is analyzing pixel patterns..."):
-            # --- 6. PRE-PROCESSING ---
-            img = image.resize((224, 224))
-            img_array = tf.keras.preprocessing.image.img_to_array(img)
-            img_array = img_array / 255.0  # Normalization
-            img_array = np.expand_dims(img_array, axis=0)
-
-            # --- 7. PREDICTION LOGIC ---
-            predictions = model.predict(img_array)
-            # Use softmax for probability distribution
-            score = tf.nn.softmax(predictions[0]) 
-            
-            result_index = np.argmax(score)
-            result_label = CLASS_NAMES[result_index]
-            confidence = 100 * np.max(score)
-
-            # --- 8. RESULT DISPLAY ---
-            if confidence > 65: 
-                st.success(f"### Prediction: **{result_label}**")
-                st.metric(label="Model Confidence Score", value=f"{confidence:.2f}%")
-                
-                st.markdown("---")
-                st.subheader("💡 Recommended Management:")
-                st.info(REMEDIES.get(result_label, "Consult an agricultural specialist for a detailed treatment plan."))
-            else:
-                st.warning("⚠️ **Ambiguous Diagnosis.** \n\nThe model is unsure. Please provide a clearer, top-down photo with better lighting.")
-
-    else:
-        st.info("Awaiting image upload for diagnosis...")
-
-# --- 9. TECHNICAL SIDEBAR ---
-with st.sidebar:
-    st.title("Project Overview")
-    st.write("**Title:** A Machine Learning Approach for Detecting Crop Disease")
-    st.info("Utilizes a Deep Convolutional Neural Network (CNN) to identify plant pathologies from leaf imagery.")
-    st.subheader("Technical Specs")
-    st.markdown(f"- **Classes:** {len(CLASS_NAMES)}")
-    st.markdown("- **Framework:** TensorFlow 2.x")
-    st.markdown("- **Input Size:** 224x224 RGB")
-    
-    st.write("---")
-    st.caption("Final Year Submission")
-
-# --- 10. FORMAL FOOTER ---
+st.write("") # Spacer
 st.markdown("""
-    <div class="footer-text">
-        © 2026 | A Machine Learning Approach for Detecting Crop Disease
-    </div>
-    """, unsafe_allow_html=True)
+**Empowering farmers with instant AI diagnosis.** Manual detection is slow and often inaccurate. Use this tool to get a precise diagnosis and take immediate action to protect your yield.
+""")
+
+uploaded_file = st.file_uploader("📸 Upload or drag a leaf photo here", type=["jpg", "jpeg", "png"])
+
+if uploaded_file is not None:
+    image = Image.open(uploaded_file)
+    st.image(image, caption='Uploaded Sample', use_container_width=True)
+    
+    if st.button("🔍 START AUTOMATED ANALYSIS"):
+        with st.spinner("Processing leaf patterns..."):
+            # 1. Image Preprocessing
+            img = image.resize((224, 224)) 
+            img_array = tf.keras.preprocessing.image.img_to_array(img)
+            img_array = np.expand_dims(img_array, axis=0)
+            img_array /= 255.0
+
+            # 2. Prediction
+            predictions = model.predict(img_array)
+            predicted_class = np.argmax(predictions)
+            confidence = np.max(predictions) * 100
+            result = class_names[predicted_class]
+            
+            # 3. Results Display
+            st.markdown("---")
+            st.markdown(f"""
+                <div class="report-box">
+                    <h2 style='margin-top:0;'>Diagnosis: <span style='color:#4E9F3D;'>{result}</span></h2>
+                    <p><b>Analysis Accuracy:</b> {confidence:.2f}%</p>
+                    <hr>
+                    <h4 style='color:#1E5128;'>Recommended Management Steps:</h4>
+                    <ul>
+                        <li><b>Isolate:</b> Prevent the spread of <b>{result}</b> by separating affected crops.</li>
+                        <li><b>Monitoring:</b> Check surrounding plants for similar early symptoms.</li>
+                        <li><b>Treatment:</b> Apply appropriate organic or chemical controls specifically for {result}.</li>
+                        <li><b>Sanitation:</b> Clean all farming tools used on the infected plant.</li>
+                    </ul>
+                </div>
+            """, unsafe_allow_html=True)
+
+st.markdown("---")
+st.caption("A Machine Learning Approach for Crop Disease Management © 2026")
