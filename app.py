@@ -30,39 +30,40 @@ def load_trained_model():
 # --- 3. CUSTOM CSS (STRICT STYLE REPLICATION) ---
 st.markdown("""
     <style>
-    /* Background from reference */
+    /* Background: Vibrant Green Leaves from reference style */
     .stApp {
-        background-image: url("https://images.unsplash.com/photo-1501004318641-729e8e26bd05?q=80&w=2000&auto=format&fit=crop");
+        background-image: url("https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2026&auto=format&fit=crop");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
 
-    /* Main Container: Dark Translucent Overlay as seen in Screenshot (42) */
-    .main-container {
-        background: rgba(0, 0, 0, 0.75);
+    /* Main Container: Dark Translucent Overlay */
+    .main-box {
+        background: rgba(0, 0, 0, 0.8);
         padding: 40px;
-        border-radius: 15px;
+        border-radius: 10px;
         color: white;
         text-align: center;
         border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: -20px;
     }
 
-    /* Large Underlined Title */
+    /* Title Styling: Big and Underlined */
     .title-text {
         font-size: 42px;
         font-weight: bold;
         color: white;
-        margin-bottom: 10px;
         text-decoration: underline;
+        margin-bottom: 15px;
     }
 
-    /* Intro Phrasing */
+    /* Intro Text Styling */
     .intro-text {
         font-size: 18px;
-        color: #e0e0e0;
-        margin-bottom: 30px;
-        line-height: 1.6;
+        color: #cccccc;
+        margin-bottom: 25px;
+        line-height: 1.5;
     }
 
     /* Predict Button Styling */
@@ -71,31 +72,31 @@ st.markdown("""
         color: white !important;
         font-weight: bold !important;
         border: none !important;
-        padding: 10px 24px !important;
-        border-radius: 5px !important;
+        padding: 10px 20px !important;
         width: 100%;
     }
 
-    /* Management Card styling */
-    .management-card {
-        background: rgba(255, 255, 255, 0.95);
+    /* Management Card styling (Only for Diseased) */
+    .mgmt-box {
+        background: white;
         color: #1b5e20;
         text-align: left;
-        padding: 25px;
-        border-radius: 10px;
-        margin-top: 30px;
-        border-left: 10px solid #d32f2f;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 25px;
+        border-left: 8px solid #d32f2f;
     }
 
+    /* Hide Streamlit default UI elements */
     footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
 # --- 4. MAIN UI CONTENT ---
-st.markdown('<div class="main-container">', unsafe_allow_html=True)
+st.markdown('<div class="main-box">', unsafe_allow_html=True)
 
+# Title and Intro inside the dark box
 st.markdown('<div class="title-text">Leaf Disease Detection</div>', unsafe_allow_html=True)
-
 st.markdown("""
     <div class="intro-text">
         A machine learning approach for detecting crop diseases, upload a clear photo of 
@@ -103,9 +104,10 @@ st.markdown("""
     </div>
     """, unsafe_allow_html=True)
 
-# Spacing
+# Spacing Rule
 st.write("---")
 
+# Model Loading
 model = load_trained_model()
 try:
     with open('class_indices.json', 'r') as f:
@@ -113,6 +115,7 @@ try:
 except:
     class_names = []
 
+# Uploader
 uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
@@ -122,7 +125,6 @@ if uploaded_file:
     
     if st.button("Predict Leaf Disease"):
         with st.spinner("Analyzing..."):
-            # Model Processing
             img = image.resize((224, 224))
             img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
             img_array = np.expand_dims(img_array, axis=0)
@@ -130,26 +132,26 @@ if uploaded_file:
             preds = model.predict(img_array)
             result = class_names[np.argmax(preds)]
             
-            # Result Label
-            st.markdown(f'<h2 style="color:white;">Predicted Disease: {result}</h2>', unsafe_allow_html=True)
+            # Prediction Result
+            st.markdown(f'<h2 style="color:white; margin-top:15px;">Predicted Disease: {result}</h2>', unsafe_allow_html=True)
 
-            # --- CONDITIONAL MANAGEMENT ---
-            # Measures only "pop up" if NOT healthy
+            # --- MANAGEMENT CONDITION ---
+            # Box only pops up if result is NOT healthy
             if "healthy" not in result.lower():
                 st.markdown(f"""
-                    <div class="management-card">
+                    <div class="mgmt-box">
                         <h3 style="color: #d32f2f; margin-top: 0;">🛡️ Management Measures</h3>
-                        <p>Measures for <b>{result}</b>:</p>
-                        <ul style="line-height: 1.8;">
-                            <li><b>Pruning:</b> Remove and destroy infected leaves.</li>
-                            <li><b>Treatment:</b> Apply Neem oil or recommended fungicides.</li>
-                            <li><b>Isolation:</b> Keep infected plants away from healthy ones.</li>
-                            <li><b>Sanitation:</b> Clean tools after handling diseased foliage.</li>
+                        <p>Recommended actions for <b>{result}</b>:</p>
+                        <ul style="line-height: 1.6;">
+                            <li><b>Pruning:</b> Remove and safely destroy all infected foliage.</li>
+                            <li><b>Treatment:</b> Apply Neem oil or organic fungicides early.</li>
+                            <li><b>Isolation:</b> Separate the plant to prevent further contamination.</li>
+                            <li><b>Sanitation:</b> Clean all gardening tools after contact with diseased leaves.</li>
                         </ul>
                     </div>
                 """, unsafe_allow_html=True)
             else:
                 st.balloons()
-                st.success("The leaf is healthy! No management measures needed.")
+                st.success("Result: Healthy! No management measures required.")
 
 st.markdown('</div>', unsafe_allow_html=True)
