@@ -5,10 +5,8 @@ from PIL import Image
 import os
 import urllib.request
 import json
-import time
 
 # --- CONFIG ---
-# Replace with your actual model and class indices URLs
 MODEL_URL = "https://github.com/anishabedajna/crop_disease_detection/releases/download/v1/plant_disease_model.h5"
 CLASS_INDICES_URL = "https://github.com/anishabedajna/crop_disease_detection/releases/download/v1/class_indices.json"
 MODEL_PATH = "plant_disease_model.h5"
@@ -16,205 +14,166 @@ CLASS_INDICES_PATH = "class_indices.json"
 
 st.set_page_config(page_title="Plant Disease Detector", layout="centered")
 
-# --- CUSTOM CSS (This matches your image exactly) ---
-# We use this to center the elements, style the button, and create the central 'card'.
+# --- CUSTOM CSS ---
 st.markdown("""
 <style>
-    /* Background for the whole app - using the requested leaf image background */
+    /* 1. Full page background with leaf image */
     .stApp {
-        background: linear-gradient(rgba(220,255,220,0.8), rgba(220,255,220,0.8)), 
+        background: linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0.4)), 
                     url("https://images.unsplash.com/photo-1599385552300-85f2fa6b3068?q=80");
         background-size: cover;
         background-position: center;
-        background-repeat: no-repeat;
+        background-attachment: fixed;
     }
 
-    /* Target the central container to make it look like a rounded 'card' */
+    /* 2. Main Container Card */
     .block-container {
-        max-width: 600px; /* limits the width for a card look */
+        max-width: 700px !important;
         margin: auto;
         padding: 50px !important;
-        background-color: #E6E6E6; /* Light grey card color from image */
-        border-radius: 20px;
-        box-shadow: 10px 10px 30px rgba(0,0,0,0.1);
-        text-align: center; /* Center-aligns all standard content */
+        background-color: rgba(235, 235, 235, 0.98);
+        border-radius: 30px;
+        box-shadow: 0px 15px 40px rgba(0,0,0,0.4);
+        text-align: center;
     }
 
-    /* Main Title Styling - Bold, Dark Green, Underlined, Centered */
+    /* 3. Underlined Centered Title */
     .main-title {
-        color: #1B3022 !important;
+        color: #0E2416 !important;
         font-family: 'Arial Black', sans-serif;
-        font-size: 3rem !important;
-        text-transform: uppercase;
+        font-size: 45px !important;
+        text-decoration: underline;
+        font-weight: 900;
         margin-bottom: 5px !important;
-        text-decoration: underline; /* Add the underline */
     }
 
     .sub-title {
-        color: #1B3022;
-        font-size: 1.2rem;
-        margin-bottom: 40px;
+        color: #0E2416 !important;
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+        font-weight: 600;
     }
 
-    /* Custom CSS to target the st.button specifically and style it dark green */
-    div.stButton > button:first-child {
-        background-color: #1B3022 !important;
+    /* 4. Small centered file uploader */
+    [data-testid="stFileUploader"] {
+        width: 80% !important;
+        margin: 0 auto !important;
+    }
+
+    /* 5. Analyze Button (Dark Green) */
+    div.stButton > button {
+        background-color: #0E2416 !important;
         color: white !important;
-        border-radius: 8px !important;
-        padding: 10px 40px !important;
-        font-size: 20px !important;
+        border-radius: 5px !important;
+        padding: 12px 0px !important;
         font-weight: bold;
+        font-size: 20px;
+        width: 100%;
         border: none !important;
-        width: 100%; /* Makes it full-width within the container */
-        margin-top: 10px;
-        cursor: pointer;
-    }
-    
-    /* Button Hover effect */
-    div.stButton > button:first-child:hover {
-        background-color: #2D4F38 !important; /* Slightly lighter on hover */
+        margin-top: 25px !important;
     }
 
-    /* Result Box Styling - a white box with left-aligned text */
+    /* 6. Result Label (White Box, Black Text) */
     .result-label {
-        background-color: white;
+        background-color: white !important;
         padding: 15px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        color: black;
-        font-weight: bold;
+        border-radius: 8px;
+        border: 2px solid #0E2416;
+        color: #000000 !important;
+        font-weight: 900;
         text-align: left;
-        margin-top: 20px;
-    }
-    
-    /* Recommendations Box Styling */
-    .recommendations-box {
-        background-color: #f1f3f5;
-        border-left: 5px solid #1B3022;
-        padding: 20px;
-        text-align: left;
-        margin-top: 20px;
-        border-radius: 4px;
-        color: #333;
+        margin-top: 15px;
+        font-size: 22px;
     }
 
-    /* Hide standard Streamlit elements */
+    /* 7. Measures Box (Strict Dark Text) */
+    .measures-box {
+        background-color: #ffffff !important;
+        border-left: 10px solid #0E2416;
+        padding: 25px;
+        margin-top: 20px;
+        border-radius: 5px;
+        text-align: left;
+        box-shadow: 3px 3px 15px rgba(0,0,0,0.1);
+    }
+
+    /* Force all text inside measures box to be BLACK */
+    .measures-box h3 {
+        color: #0E2416 !important;
+        font-weight: 900 !important;
+        margin-bottom: 15px !important;
+    }
+
+    .measures-box p, .measures-box li {
+        color: #000000 !important;
+        font-weight: 700 !important;
+        font-size: 18px !important;
+    }
+
+    /* 8. Hide Streamlit clutter */
     header, footer {visibility: hidden;}
-    .css-1dp5a00 {visibility: hidden;} /* Hides the standard title if needed */
 </style>
 """, unsafe_allow_html=True)
 
-# --- CACHED RESOURCES LOADING ---
+# --- LOAD RESOURCES ---
 @st.cache_resource
-def load_and_cache_model():
+def load_all():
     if not os.path.exists(MODEL_PATH):
-        with st.spinner("Downloading and loading model... this may take a moment."):
-            urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
-    return tf.keras.models.load_model(MODEL_PATH)
-
-@st.cache_data
-def load_and_cache_class_names():
+        urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
     if not os.path.exists(CLASS_INDICES_PATH):
-        with st.spinner("Downloading class labels..."):
-            urllib.request.urlretrieve(CLASS_INDICES_URL, CLASS_INDICES_PATH)
+        urllib.request.urlretrieve(CLASS_INDICES_URL, CLASS_INDICES_PATH)
+    model = tf.keras.models.load_model(MODEL_PATH)
     with open(CLASS_INDICES_PATH, "r") as f:
-        data = json.load(f)
-        return [data[str(i)] for i in range(len(data))]
+        indices = json.load(f)
+        class_names = [indices[str(i)] for i in range(len(indices))]
+    return model, class_names
 
-# Try-except block for loading model/classes (best practice for production)
-try:
-    model = load_and_cache_model()
-    class_names = load_and_cache_class_names()
-except Exception as e:
-    st.error(f"Error loading model resources: {e}")
-    class_names = []
+model, class_names = load_all()
 
-# --- DISEASE MEASURES (DATA DICTIONARY) ---
-# It's better to keep this data-focused and style it dynamically in the UI section
+# --- SOLUTIONS DICTIONARY ---
 solutions = {
-    "Tomato___Late_blight": [
-        "Remove and destroy infected leaves immediately.",
-        "Apply fungicides like Copper-based sprays or Mancozeb.",
-        "Ensure good air circulation."
-    ],
-    "Tomato___Early_blight": [
-        "Rotate crops. Use copper-based fungicides.",
-        "Remove lower leaves to stop upward spread."
-    ],
-    "Potato___Late_blight": [
-        "Use certified disease-free seeds.",
-        "Apply protective fungicides before rainy periods.",
-        "Improve air circulation."
-    ],
-    "Apple___Black_rot": [
-        "Prune infected branches and cankers.",
-        "Apply appropriate fungicides.",
-        "Remove and destroy fallen fruits."
-    ],
-    "Corn___Common_rust": [
-        "Use resistant varieties if available.",
-        "Apply fungicide if necessary (though often not needed)."
-    ],
+    "Potato___Late_blight": "1. Use certified disease-free seeds. \n2. Apply fungicides like Mancozeb. \n3. Improve air circulation.",
+    "Tomato___Early_blight": "1. Rotate crops annually. \n2. Apply copper-based fungicides. \n3. Remove infected lower leaves.",
+    "Apple___Black_rot": "1. Prune out dead wood. \n2. Remove fallen fruit. \n3. Use appropriate fungicides.",
 }
 
-# --- UI HEADER ---
-# This markdown structure and the CSS classes ensure the exact header look.
-st.markdown('<h1 class="main-title">PLANT DISEASE DETECTOR</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Please upload the image of the plant leaf for the analysis</p>', unsafe_allow_html=True)
+# --- UI START ---
+st.markdown('<p class="main-title">PLANT DISEASE DETECTOR</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Please upload the image of the plant leaf for analysis</p>', unsafe_allow_html=True)
 
-# --- FILE UPLOADER & IMAGE HANDLING ---
-# Streamlit's file_uploader doesn't fully support custom styling from standard CSS,
-# but we wrap it to match the overall layout.
-uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("", type=["jpg", "png", "jpeg"])
 
-if uploaded_file is not None:
+if uploaded_file:
     image = Image.open(uploaded_file)
-    
-    # Display image at full width of our custom card container
     st.image(image, use_container_width=True)
 
-    # --- ANALYZE BUTTON & FUNCTIONALITY ---
+    # ANALYZE BUTTON - sits directly below image
     if st.button("ANALYZE"):
-        # Check if model/classes loaded successfully
-        if not class_names or model is None:
-            st.error("Cannot proceed. Model resources are missing.")
+        # Processing
+        img = image.resize((224, 224))
+        img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
+        
+        preds = model.predict(img_array)
+        result = class_names[np.argmax(preds)]
+
+        # 1. Result Display
+        st.markdown(f'<div class="result-label">Result = {result}</div>', unsafe_allow_html=True)
+
+        # 2. Logic Check
+        if "healthy" not in result.lower():
+            # Show "Diseased" Status in dark red bold text
+            st.markdown('<p style="color:#B22222; font-size:24px; font-weight:900; margin-top:15px;">❌ This crop is Diseased</p>', unsafe_allow_html=True)
+            
+            # Show Measures in the Black Text Box
+            measure_text = solutions.get(result, "Apply general fungicide and remove infected plant parts immediately.")
+            st.markdown(f"""
+                <div class="measures-box">
+                    <h3>📋 Recommended Measures:</h3>
+                    <p>{measure_text}</p>
+                </div>
+            """, unsafe_allow_html=True)
         else:
-            with st.spinner('Performing analysis...'):
-                # 1. Prepare Image for Prediction
-                # (Assuming model expects (224, 224) and [0,1] normalization)
-                img_for_model = image.resize((224, 224))
-                img_array = tf.keras.preprocessing.image.img_to_array(img_for_model) / 255.0
-                img_array = np.expand_dims(img_array, axis=0)
-
-                # 2. Get Prediction
-                preds = model.predict(img_array)
-                result_index = np.argmax(preds)
-                predicted_class = class_names[result_index]
-
-                # 3. Create Custom Result Label (Matches image exactly)
-                st.markdown(f'<div class="result-label">Result = {predicted_class}</div>', unsafe_allow_html=True)
-
-                # 4. Conditional Check: If diseased, show measures in a conditional popup.
-                if "healthy" not in predicted_class.lower():
-                    st.error("This crop is Diseased")
-                    
-                    # 5. Show Recommended Measures
-                    measures_list = solutions.get(predicted_class, ["Consult an agricultural expert."])
-                    
-                    st.markdown("""
-                        <div class="recommendations-box">
-                            <h3 style="margin-top:0; color:#1B3022;">📋 Recommended Measures:</h3>
-                            <ul>
-                    """, unsafe_allow_html=True)
-                    
-                    for measure in measures_list:
-                        st.markdown(f"<li>{measure}</li>", unsafe_allow_html=True)
-                        
-                    st.markdown("""
-                            </ul>
-                        </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.success("This crop is Healthy")
-                    # Add a nice celebratory effect for health
-                    st.balloons()
+            # Show "Healthy" Status in dark green bold text
+            st.markdown('<p style="color:#006400; font-size:24px; font-weight:900; margin-top:15px;">✅ This crop is Healthy</p>', unsafe_allow_html=True)
+            st.balloons()
