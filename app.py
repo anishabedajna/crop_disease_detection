@@ -80,10 +80,10 @@ header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- TITLE (MOVED UP) ---
+# --- TITLE ---
 st.markdown("""
 <div style="text-align:center; margin-top:-40px;">
-    <h1 style="color:#111; text-decoration: underline; margin-bottom:0;">
+    <h1 style="color:#111; text-decoration: underline;">
         Plant Disease Detection App
     </h1>
 </div>
@@ -106,7 +106,6 @@ analyze = st.button("Analyze")
 if uploaded_file:
     image = Image.open(uploaded_file)
 
-    # Center image
     st.image(image, width=300)
 
     if analyze:
@@ -117,31 +116,61 @@ if uploaded_file:
         preds = model.predict(img_array)
         result = class_names[np.argmax(preds)]
 
-        # --- RESULT TEXT ---
+        # --- RESULT BOX ---
         if "healthy" in result.lower():
-            st.markdown(
-                "<h3 style='color:#1b5e20; text-align:center;'>✅ This crop is Healthy</h3>",
-                unsafe_allow_html=True
-            )
-        else:
-            st.markdown(
-                f"<h3 style='color:#8b0000; text-align:center;'>❌ This crop is Diseased: {result}</h3>",
-                unsafe_allow_html=True
-            )
+            st.markdown("""
+            <div style="
+                background-color: rgba(255,255,255,0.9);
+                padding: 12px;
+                border-radius: 10px;
+                width: 60%;
+                margin: auto;
+                text-align: center;">
+                
+                <p style="color:#1b5e20; font-size:18px; font-weight:bold;">
+                    ✅ This crop is Healthy
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
 
-            # --- RECOMMENDED MEASURES ---
-            st.markdown(
-                "<h3 style='color:#000000; text-align:center; margin-top:10px;'>Recommended Measures</h3>",
-                unsafe_allow_html=True
-            )
+        else:
+            st.markdown(f"""
+            <div style="
+                background-color: rgba(255,255,255,0.9);
+                padding: 12px;
+                border-radius: 10px;
+                width: 60%;
+                margin: auto;
+                text-align: center;">
+                
+                <p style="color:#8b0000; font-size:18px; font-weight:bold;">
+                    ❌ This crop is Diseased: {result}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # --- MEASURES BOX ---
+            st.markdown("""
+            <div style="
+                background-color: rgba(255,255,255,0.9);
+                padding: 15px;
+                border-radius: 10px;
+                width: 65%;
+                margin: 15px auto;
+                text-align: center;">
+                
+                <h3 style="color:#000;">Recommended Measures</h3>
+            """, unsafe_allow_html=True)
 
             if result in solutions:
                 for step in solutions[result]:
                     st.markdown(
-                        f"<p style='color:#000000; text-align:center; margin:0;'>• {step}</p>",
+                        f"<p style='color:#000; margin:2px;'>• {step}</p>",
                         unsafe_allow_html=True
                     )
             else:
-                st.markdown("<p style='color:#000000; text-align:center;'>• Remove infected parts</p>", unsafe_allow_html=True)
-                st.markdown("<p style='color:#000000; text-align:center;'>• Apply fungicide</p>", unsafe_allow_html=True)
-                st.markdown("<p style='color:#000000; text-align:center;'>• Maintain proper care</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#000;'>• Remove infected parts</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#000;'>• Apply fungicide</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#000;'>• Maintain proper care</p>", unsafe_allow_html=True)
+
+            st.markdown("</div>", unsafe_allow_html=True)
