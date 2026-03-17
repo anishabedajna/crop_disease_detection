@@ -29,92 +29,98 @@ try:
 except:
     class_names = []
 
-# --- CUSTOM UI (LIGHT GREEN STYLE) ---
+# --- DISEASE SOLUTIONS (IMPORTANT ADDITION) ---
+solutions = {
+    "Tomato___Late_blight": "Remove infected leaves. Apply fungicide like Mancozeb. Avoid overhead watering.",
+    "Tomato___Early_blight": "Use crop rotation. Apply copper-based fungicides. Remove affected leaves.",
+    "Potato___Late_blight": "Use certified seeds. Apply fungicide. Improve air circulation.",
+    "Apple___Black_rot": "Prune infected branches. Apply fungicide. Remove fallen fruits.",
+    "Corn___Common_rust": "Use resistant varieties. Apply fungicide if severe.",
+}
+
+# --- CUSTOM CSS (same as before) ---
 st.markdown("""
 <style>
-
-/* Background */
 .stApp {
-    background: linear-gradient(rgba(200,255,200,0.6), rgba(200,255,200,0.6)),
+    background: linear-gradient(rgba(220,255,220,0.7), rgba(220,255,220,0.7)),
                 url("https://images.unsplash.com/photo-1501004318641-b39e6451bec6");
     background-size: cover;
     background-position: center;
 }
+.block-container { text-align: center; }
 
-/* Center everything */
-.block-container {
-    text-align: center;
-}
-
-/* Title */
 .title {
-    font-size: 40px;
+    font-size: 42px;
     font-weight: bold;
-    color: #2e7d32;
+    color: #1a1a1a;
     margin-top: 30px;
 }
 
-/* Subtitle */
 .subtitle {
     font-size: 18px;
-    color: #4e944f;
-    margin-bottom: 30px;
+    color: #333333;
+    margin-bottom: 25px;
 }
 
-/* Button */
-div.stButton > button {
-    background-color: #2e7d32 !important;
-    color: white !important;
+section[data-testid="stFileUploader"] {
+    max-width: 400px;
+    margin: auto;
+}
+
+img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.stSuccess {
+    background-color: rgba(255,255,255,0.9) !important;
+    color: #111 !important;
     font-weight: bold;
-    border-radius: 6px;
+    text-align: center;
 }
 
-/* Info box */
-.info-box {
-    background-color: rgba(200,255,200,0.7);
-    padding: 10px;
-    border-radius: 5px;
-    margin-top: 15px;
-    color: #2e7d32;
+.stWarning {
+    background-color: rgba(255,255,200,0.9) !important;
+    color: #222 !important;
+    font-weight: bold;
+    text-align: center;
 }
 
 header, footer {visibility: hidden;}
-
 </style>
 """, unsafe_allow_html=True)
 
-# --- UI TEXT ---
+# --- UI ---
 st.markdown('<div class="title">Plant Disease Detection App</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Upload one or more plant leaf images to detect diseases.</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Upload a plant leaf image to detect disease instantly.</div>', unsafe_allow_html=True)
 
-# --- FILE UPLOADER ---
-uploaded_file = st.file_uploader(
-    "Upload one or more leaf images (jpg, jpeg, png)",
-    type=["jpg", "jpeg", "png"],
-    accept_multiple_files=False
-)
+uploaded_file = st.file_uploader("Upload leaf image", type=["jpg", "jpeg", "png"])
 
-st.markdown('<div class="info-box">Please upload a plant leaf image to get started.</div>', unsafe_allow_html=True)
-
-predict_clicked = st.button("Detect Disease")
-
-# --- PREDICTION ---
+# --- AUTO PREDICTION ---
 if uploaded_file:
     image = Image.open(uploaded_file)
 
-    st.image(image, caption="Uploaded Image", width=300)
+    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+    st.image(image, width=300)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    if predict_clicked:
-        img = image.resize((224, 224))
-        img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
+    # --- PROCESS IMAGE ---
+    img = image.resize((224, 224))
+    img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
 
-        preds = model.predict(img_array)
-        result = class_names[np.argmax(preds)]
+    preds = model.predict(img_array)
+    result = class_names[np.argmax(preds)]
 
-        st.success(f"Prediction: {result}")
+    # --- HEALTH CHECK ---
+    if "healthy" in result.lower():
+        st.success("✅ The plant is Healthy")
+    else:
+        st.error(f"❌ Disease Detected: {result}")
 
-        if "healthy" not in result.lower():
-            st.warning("Apply proper treatment and isolate plant.")
+        # --- SHOW SOLUTION ---
+        if result in solutions:
+            st.warning(f"🌿 Treatment: {solutions[result]}")
         else:
-            st.success("Healthy leaf detected!")
+            st.warning("Apply general fungicide and remove infected parts.")
