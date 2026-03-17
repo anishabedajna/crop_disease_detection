@@ -92,7 +92,7 @@ A machine learning-based approach to detect plant crop diseases and recommend ap
 </p>
 """, unsafe_allow_html=True)
 
-# --- UPLOADER ---
+# --- FILE UPLOADER ---
 uploaded_file = st.file_uploader("Upload leaf image", type=["jpg", "jpeg", "png"])
 analyze = st.button("Analyze")
 
@@ -128,18 +128,21 @@ if uploaded_file:
             </div>
             """, unsafe_allow_html=True)
 
-            # --- MEASURES BOX ---
+            # --- HEADING (SAME SIZE AS RESULT) ---
             st.markdown("""
-            <div style="background-color:white; padding:15px; border-radius:10px; width:65%; margin:15px auto; text-align:center;">
-                <h3 style="color:black;">Recommended Measures</h3>
+            <p style='color:black; font-size:18px; font-weight:bold; text-align:center; text-decoration: underline; margin-top:15px;'>
+                Recommended Measures
+            </p>
             """, unsafe_allow_html=True)
 
+            # --- BULLETS ---
             if result in solutions:
                 for step in solutions[result]:
-                    st.markdown(f"<p style='color:black;'>• {step}</p>", unsafe_allow_html=True)
+                    st.markdown(
+                        f"<p style='color:black; text-align:center; margin:2px;'>• {step}</p>",
+                        unsafe_allow_html=True
+                    )
             else:
-                st.markdown("<p style='color:black;'>• Remove infected parts</p>", unsafe_allow_html=True)
-                st.markdown("<p style='color:black;'>• Apply fungicide</p>", unsafe_allow_html=True)
-                st.markdown("<p style='color:black;'>• Maintain proper care</p>", unsafe_allow_html=True)
-
-            st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown("<p style='color:black; text-align:center;'>• Remove infected parts</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:black; text-align:center;'>• Apply fungicide</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:black; text-align:center;'>• Maintain proper care</p>", unsafe_allow_html=True)
