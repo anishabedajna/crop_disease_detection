@@ -48,7 +48,7 @@ solutions = {
     ],
 }
 
-# --- CUSTOM CSS ---
+# --- CSS ---
 st.markdown("""
 <style>
 .stApp {
@@ -57,25 +57,21 @@ st.markdown("""
     background-size: cover;
 }
 
-/* Center everything */
 .block-container {
     text-align: center;
 }
 
-/* File name color */
 [data-testid="stFileUploaderFileName"] {
     color: black !important;
     font-weight: 600;
 }
 
-/* Button */
 div.stButton > button {
     background-color: #2e7d32 !important;
     color: white !important;
     font-weight: bold;
 }
 
-/* Hide header/footer */
 header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
@@ -96,16 +92,13 @@ A machine learning-based approach to detect plant crop diseases and recommend ap
 </p>
 """, unsafe_allow_html=True)
 
-# --- FILE UPLOADER ---
+# --- UPLOADER ---
 uploaded_file = st.file_uploader("Upload leaf image", type=["jpg", "jpeg", "png"])
-
-# --- BUTTON ---
 analyze = st.button("Analyze")
 
 # --- PREDICTION ---
 if uploaded_file:
     image = Image.open(uploaded_file)
-
     st.image(image, width=300)
 
     if analyze:
@@ -118,16 +111,9 @@ if uploaded_file:
 
         # --- RESULT BOX ---
         if "healthy" in result.lower():
-            st.markdown("""
-            <div style="
-                background-color: rgba(255,255,255,0.9);
-                padding: 12px;
-                border-radius: 10px;
-                width: 60%;
-                margin: auto;
-                text-align: center;">
-                
-                <p style="color:#1b5e20; font-size:18px; font-weight:bold;">
+            st.markdown(f"""
+            <div style="background-color:white; padding:12px; border-radius:10px; width:60%; margin:auto;">
+                <p style="color:#1b5e20; font-size:18px; font-weight:bold; text-align:center;">
                     ✅ This crop is Healthy
                 </p>
             </div>
@@ -135,15 +121,8 @@ if uploaded_file:
 
         else:
             st.markdown(f"""
-            <div style="
-                background-color: rgba(255,255,255,0.9);
-                padding: 12px;
-                border-radius: 10px;
-                width: 60%;
-                margin: auto;
-                text-align: center;">
-                
-                <p style="color:#8b0000; font-size:18px; font-weight:bold;">
+            <div style="background-color:white; padding:12px; border-radius:10px; width:60%; margin:auto;">
+                <p style="color:#8b0000; font-size:18px; font-weight:bold; text-align:center;">
                     ❌ This crop is Diseased: {result}
                 </p>
             </div>
@@ -151,26 +130,16 @@ if uploaded_file:
 
             # --- MEASURES BOX ---
             st.markdown("""
-            <div style="
-                background-color: rgba(255,255,255,0.9);
-                padding: 15px;
-                border-radius: 10px;
-                width: 65%;
-                margin: 15px auto;
-                text-align: center;">
-                
-                <h3 style="color:#000;">Recommended Measures</h3>
+            <div style="background-color:white; padding:15px; border-radius:10px; width:65%; margin:15px auto; text-align:center;">
+                <h3 style="color:black;">Recommended Measures</h3>
             """, unsafe_allow_html=True)
 
             if result in solutions:
                 for step in solutions[result]:
-                    st.markdown(
-                        f"<p style='color:#000; margin:2px;'>• {step}</p>",
-                        unsafe_allow_html=True
-                    )
+                    st.markdown(f"<p style='color:black;'>• {step}</p>", unsafe_allow_html=True)
             else:
-                st.markdown("<p style='color:#000;'>• Remove infected parts</p>", unsafe_allow_html=True)
-                st.markdown("<p style='color:#000;'>• Apply fungicide</p>", unsafe_allow_html=True)
-                st.markdown("<p style='color:#000;'>• Maintain proper care</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:black;'>• Remove infected parts</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:black;'>• Apply fungicide</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:black;'>• Maintain proper care</p>", unsafe_allow_html=True)
 
             st.markdown("</div>", unsafe_allow_html=True)
