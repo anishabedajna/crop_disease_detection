@@ -48,7 +48,7 @@ solutions = {
     ],
 }
 
-# --- CUSTOM CSS ---
+# --- CSS FIXED ---
 st.markdown("""
 <style>
 
@@ -60,18 +60,22 @@ st.markdown("""
     background-position: center;
 }
 
-/* Center everything */
+/* Force center alignment properly */
 .block-container {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Title */
+/* Title FIXED CENTER */
 .title {
     font-size: 42px;
     font-weight: bold;
     color: #111;
     margin-top: 10px;
     text-decoration: underline;
+    text-align: center;
+    width: 100%;
 }
 
 /* Subtitle */
@@ -79,6 +83,7 @@ st.markdown("""
     font-size: 18px;
     color: #222;
     margin-bottom: 20px;
+    text-align: center;
 }
 
 /* Uploader */
@@ -87,7 +92,7 @@ section[data-testid="stFileUploader"] {
     margin: auto;
 }
 
-/* Image center */
+/* Center image */
 img {
     display: block;
     margin-left: auto;
@@ -110,6 +115,15 @@ div.stButton > button {
     margin-top: 15px;
     color: #111;
     font-weight: bold;
+    text-align: center;
+}
+
+/* Measures heading FIXED BLACK */
+.measures-title {
+    color: #000000;
+    font-weight: bold;
+    margin-top: 15px;
+    text-align: center;
 }
 
 /* Bullet text */
@@ -146,20 +160,18 @@ if uploaded_file:
         preds = model.predict(img_array)
         result = class_names[np.argmax(preds)]
 
-        # --- HEALTH CHECK ---
         if "healthy" in result.lower():
-            st.markdown(f'<div class="result-box">✅ This crop is Healthy</div>', unsafe_allow_html=True)
-
+            st.markdown('<div class="result-box">✅ This crop is Healthy</div>', unsafe_allow_html=True)
         else:
             st.markdown(f'<div class="result-box">❌ This crop is Diseased: {result}</div>', unsafe_allow_html=True)
 
-            # --- SOLUTIONS ---
+            # --- MEASURES ---
+            st.markdown('<div class="measures-title">🌿 Recommended Measures</div>', unsafe_allow_html=True)
+
             if result in solutions:
-                st.markdown("### 🌿 Recommended Measures:")
                 for step in solutions[result]:
                     st.markdown(f"- {step}")
             else:
-                st.markdown("### 🌿 Recommended Measures:")
                 st.markdown("- Remove infected parts")
                 st.markdown("- Apply general fungicide")
                 st.markdown("- Keep plant in dry conditions")
