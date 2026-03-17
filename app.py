@@ -48,7 +48,7 @@ solutions = {
     ],
 }
 
-# --- SIMPLE CSS (SAFE) ---
+# --- CUSTOM CSS ---
 st.markdown("""
 <style>
 .stApp {
@@ -80,24 +80,23 @@ header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- TITLE (SAFE HTML) ---
+# --- TITLE (MOVED UP) ---
 st.markdown("""
-<div style="text-align:center; margin-top:-10px;">
-    <h1 style="color:#111; text-decoration: underline;">
+<div style="text-align:center; margin-top:-40px;">
+    <h1 style="color:#111; text-decoration: underline; margin-bottom:0;">
         Plant Disease Detection App
     </h1>
 </div>
 """, unsafe_allow_html=True)
 
 # --- SUBTITLE ---
-st.markdown(
-    "<p style='text-align:center; font-size:18px; color:#222; margin-top:10px;'>"
-    "A machine learning-based approach to detect plant crop diseases and recommend appropriate measures."
-    "</p>",
-    unsafe_allow_html=True
-)
+st.markdown("""
+<p style='text-align:center; font-size:18px; color:#222; margin-top:20px;'>
+A machine learning-based approach to detect plant crop diseases and recommend appropriate measures.
+</p>
+""", unsafe_allow_html=True)
 
-# --- UPLOADER ---
+# --- FILE UPLOADER ---
 uploaded_file = st.file_uploader("Upload leaf image", type=["jpg", "jpeg", "png"])
 
 # --- BUTTON ---
@@ -107,6 +106,7 @@ analyze = st.button("Analyze")
 if uploaded_file:
     image = Image.open(uploaded_file)
 
+    # Center image
     st.image(image, width=300)
 
     if analyze:
@@ -117,18 +117,31 @@ if uploaded_file:
         preds = model.predict(img_array)
         result = class_names[np.argmax(preds)]
 
-        # --- RESULT ---
+        # --- RESULT TEXT ---
         if "healthy" in result.lower():
-            st.success("✅ This crop is Healthy")
+            st.markdown(
+                "<h3 style='color:#1b5e20; text-align:center;'>✅ This crop is Healthy</h3>",
+                unsafe_allow_html=True
+            )
         else:
-            st.error(f"❌ This crop is Diseased: {result}")
+            st.markdown(
+                f"<h3 style='color:#8b0000; text-align:center;'>❌ This crop is Diseased: {result}</h3>",
+                unsafe_allow_html=True
+            )
 
-            st.markdown("### 🌿 Recommended Measures")
+            # --- RECOMMENDED MEASURES ---
+            st.markdown(
+                "<h3 style='color:#000000; text-align:center; margin-top:10px;'>Recommended Measures</h3>",
+                unsafe_allow_html=True
+            )
 
             if result in solutions:
                 for step in solutions[result]:
-                    st.markdown(f"- {step}")
+                    st.markdown(
+                        f"<p style='color:#000000; text-align:center; margin:0;'>• {step}</p>",
+                        unsafe_allow_html=True
+                    )
             else:
-                st.markdown("- Remove infected parts")
-                st.markdown("- Apply fungicide")
-                st.markdown("- Maintain proper care")
+                st.markdown("<p style='color:#000000; text-align:center;'>• Remove infected parts</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#000000; text-align:center;'>• Apply fungicide</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#000000; text-align:center;'>• Maintain proper care</p>", unsafe_allow_html=True)
