@@ -134,10 +134,10 @@ header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- TITLE + SUBTITLE (FINAL SPACING FIX) ---
+# --- TITLE + SUBTITLE (NO ERROR VERSION) ---
 st.markdown("""
 <div style="text-align: center; margin-top: -10px;">
-    
+
     <h1 style="color:#111; text-decoration: underline; margin-bottom: 0px;">
         Plant Disease Detection App
     </h1>
