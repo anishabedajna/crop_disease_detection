@@ -26,28 +26,21 @@ def load_trained_model():
 st.markdown("""
 <style>
 
-/* FULL BACKGROUND */
+/* BACKGROUND */
 .stApp {
     background-image: url("https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2026&auto=format&fit=crop");
     background-size: cover;
-    background-position: center;
 }
 
-/* REMOVE DEFAULT SPACING */
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-}
-
-/* MAIN BLACK BOX */
+/* MAIN BOX */
 .main-box {
-    background-color: rgba(0, 0, 0, 0.85);
-    padding: 45px;
+    background: rgba(0,0,0,0.85);
+    padding: 40px;
     border-radius: 12px;
-    color: white;
     text-align: center;
     width: 60%;
     margin: auto;
+    color: white;
 }
 
 /* TITLE */
@@ -57,53 +50,33 @@ st.markdown("""
     margin-bottom: 25px;
 }
 
-/* FILE UPLOADER FIX */
-[data-testid="stFileUploadDropzone"] {
-    background-color: white !important;
-    border: none !important;
-    padding: 6px !important;
-    border-radius: 5px !important;
-    text-align: center;
+/* 🔥 HIDE DEFAULT FILE UPLOADER COMPLETELY */
+[data-testid="stFileUploader"] {
+    opacity: 0;
+    position: absolute;
+    z-index: -1;
 }
 
-/* REMOVE DEFAULT CONTENT */
-[data-testid="stFileUploadDropzone"] * {
-    display: none !important;
-}
-
-/* CUSTOM TEXT */
-[data-testid="stFileUploadDropzone"]::before {
-    content: "Choose File";
-    display: inline-block;
+/* FAKE BUTTON */
+.upload-btn {
+    background: white;
     color: black;
-    font-size: 14px;
+    padding: 8px 15px;
+    border-radius: 5px;
+    display: inline-block;
     cursor: pointer;
+    font-size: 14px;
 }
 
-/* BUTTON */
+/* GREEN BUTTON */
 div.stButton > button {
     background-color: #28a745 !important;
     color: white !important;
-    font-weight: bold !important;
-    border: none !important;
-    padding: 10px 20px !important;
-    font-size: 15px !important;
-    height: 40px;
+    font-weight: bold;
     border-radius: 5px;
 }
 
-/* MANAGEMENT CARD */
-.mgmt-card {
-    background-color: white;
-    color: #1b5e20;
-    text-align: left;
-    padding: 20px;
-    border-radius: 8px;
-    margin-top: 20px;
-    border-left: 10px solid #d32f2f;
-}
-
-/* HIDE STREAMLIT BRANDING */
+/* REMOVE HEADER FOOTER */
 header, footer {
     visibility: hidden;
 }
@@ -111,29 +84,19 @@ header, footer {
 </style>
 """, unsafe_allow_html=True)
 
+
+
 # --- 3. UI LAYOUT ---
 st.markdown('<div class="main-box">', unsafe_allow_html=True)
 st.markdown('<div class="header-text">Crop Disease Detection</div>', unsafe_allow_html=True)
 
-# Load model
-model = load_trained_model()
+# Fake button text
+st.markdown('<div class="upload-btn">Choose File</div>', unsafe_allow_html=True)
 
-# Load class names
-try:
-    with open('class_indices.json', 'r') as f:
-        class_names = list(json.load(f).values())
-except:
-    class_names = []
+# REAL uploader (hidden)
+uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
 
-# --- FILE + BUTTON ROW ---
-col1, col2 = st.columns([3, 1], gap="small")
-
-with col1:
-    uploaded_file = st.file_uploader(" ", type=["jpg", "jpeg", "png"])
-
-with col2:
-    st.markdown('<div style="height:6px;"></div>', unsafe_allow_html=True)
-    predict_clicked = st.button("Predict Leaf Disease")
+predict_clicked = st.button("Predict Leaf Disease")
 
 # --- 4. PREDICTION ---
 if uploaded_file:
