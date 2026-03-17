@@ -48,30 +48,17 @@ solutions = {
     ],
 }
 
-# --- CSS ---
+# --- SIMPLE CSS (SAFE) ---
 st.markdown("""
 <style>
-
-/* Background */
 .stApp {
     background: linear-gradient(rgba(220,255,220,0.7), rgba(220,255,220,0.7)),
                 url("https://images.unsplash.com/photo-1501004318641-b39e6451bec6");
     background-size: cover;
-    background-position: center;
 }
 
 /* Center everything */
 .block-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-/* File uploader */
-section[data-testid="stFileUploader"] {
-    max-width: 350px;
-    margin: auto;
     text-align: center;
 }
 
@@ -79,77 +66,38 @@ section[data-testid="stFileUploader"] {
 [data-testid="stFileUploaderFileName"] {
     color: black !important;
     font-weight: 600;
-    text-align: center;
 }
 
-/* Center image */
-img {
-    display: block;
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
-/* Button center */
-div.stButton {
-    display: flex;
-    justify-content: center;
-}
-
+/* Button */
 div.stButton > button {
     background-color: #2e7d32 !important;
     color: white !important;
     font-weight: bold;
-    border-radius: 6px;
-}
-
-/* Result box */
-.result-box {
-    background-color: rgba(255,255,255,0.9);
-    padding: 12px;
-    border-radius: 8px;
-    margin-top: 15px;
-    color: #111;
-    font-weight: bold;
-    text-align: center;
-}
-
-/* Measures title */
-.measures-title {
-    color: #000000;
-    font-weight: bold;
-    margin-top: 15px;
-    text-align: center;
-}
-
-/* Bullet points */
-ul {
-    display: inline-block;
-    text-align: left;
-    color: #222;
 }
 
 /* Hide header/footer */
 header, footer {visibility: hidden;}
-
 </style>
 """, unsafe_allow_html=True)
 
-# --- TITLE + SUBTITLE (NO ERROR VERSION) ---
+# --- TITLE (SAFE HTML) ---
 st.markdown("""
-<div style="text-align: center; margin-top: -10px;">
-
-    <h1 style="color:#111; text-decoration: underline; margin-bottom: 0px;">
+<div style="text-align:center; margin-top:-10px;">
+    <h1 style="color:#111; text-decoration: underline;">
         Plant Disease Detection App
     </h1>
-
-    <p style="color:#222; font-size:18px; margin-top: 20px;">
-        A machine learning-based approach to detect plant crop diseases and recommend appropriate measures.
-    </p>
-
 </div>
 """, unsafe_allow_html=True)
 
-# --- FILE UPLOADER ---
+# --- SUBTITLE ---
+st.markdown(
+    "<p style='text-align:center; font-size:18px; color:#222; margin-top:10px;'>"
+    "A machine learning-based approach to detect plant crop diseases and recommend appropriate measures."
+    "</p>",
+    unsafe_allow_html=True
+)
+
+# --- UPLOADER ---
 uploaded_file = st.file_uploader("Upload leaf image", type=["jpg", "jpeg", "png"])
 
 # --- BUTTON ---
@@ -159,10 +107,7 @@ analyze = st.button("Analyze")
 if uploaded_file:
     image = Image.open(uploaded_file)
 
-    # Center image
-    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     st.image(image, width=300)
-    st.markdown("</div>", unsafe_allow_html=True)
 
     if analyze:
         img = image.resize((224, 224))
@@ -172,18 +117,18 @@ if uploaded_file:
         preds = model.predict(img_array)
         result = class_names[np.argmax(preds)]
 
+        # --- RESULT ---
         if "healthy" in result.lower():
-            st.markdown('<div class="result-box">✅ This crop is Healthy</div>', unsafe_allow_html=True)
-
+            st.success("✅ This crop is Healthy")
         else:
-            st.markdown(f'<div class="result-box">❌ This crop is Diseased: {result}</div>', unsafe_allow_html=True)
+            st.error(f"❌ This crop is Diseased: {result}")
 
-            st.markdown('<div class="measures-title">🌿 Recommended Measures</div>', unsafe_allow_html=True)
+            st.markdown("### 🌿 Recommended Measures")
 
             if result in solutions:
                 for step in solutions[result]:
                     st.markdown(f"- {step}")
             else:
                 st.markdown("- Remove infected parts")
-                st.markdown("- Apply general fungicide")
-                st.markdown("- Keep plant in dry conditions")
+                st.markdown("- Apply fungicide")
+                st.markdown("- Maintain proper care")
