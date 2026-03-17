@@ -10,7 +10,7 @@ import json
 MODEL_URL = "https://github.com/anishabedajna/crop_disease_detection/releases/download/v1/plant_disease_model.h5"
 MODEL_PATH = "plant_disease_model.h5"
 
-st.set_page_config(page_title="Plant Disease Detection", page_icon="🌿", layout="centered")
+st.set_page_config(page_title="Plant Disease Detection", layout="centered")
 
 # --- LOAD MODEL ---
 @st.cache_resource
@@ -25,11 +25,13 @@ model = load_model()
 # --- LOAD CLASS NAMES ---
 try:
     with open("class_indices.json", "r") as f:
-        class_names = list(json.load(f).values())
+        # Assuming JSON is { "0": "DiseaseName", "1": "Healthy" }
+        data = json.load(f)
+        class_names = [data[str(i)] for i in range(len(data))]
 except:
     class_names = []
 
-# --- DISEASE SOLUTIONS (IMPORTANT ADDITION) ---
+# --- DISEASE SOLUTIONS ---
 solutions = {
     "Tomato___Late_blight": "Remove infected leaves. Apply fungicide like Mancozeb. Avoid overhead watering.",
     "Tomato___Early_blight": "Use crop rotation. Apply copper-based fungicides. Remove affected leaves.",
@@ -38,89 +40,114 @@ solutions = {
     "Corn___Common_rust": "Use resistant varieties. Apply fungicide if severe.",
 }
 
-# --- CUSTOM CSS (same as before) ---
+# --- EXACT UI CSS ---
 st.markdown("""
 <style>
-.stApp {
-    background: linear-gradient(rgba(220,255,220,0.7), rgba(220,255,220,0.7)),
-                url("https://images.unsplash.com/photo-1501004318641-b39e6451bec6");
-    background-size: cover;
-    background-position: center;
-}
-.block-container { text-align: center; }
+    /* Background of the whole app */
+    .stApp {
+        background-color: #D9D9D9 !important;
+    }
+    
+    /* Center text alignment */
+    .block-container {
+        text-align: center;
+        padding-top: 2rem;
+    }
 
-.title {
-    font-size: 42px;
-    font-weight: bold;
-    color: #1a1a1a;
-    margin-top: 30px;
-}
+    /* Main Title Styling */
+    .main-title {
+        color: #1B3022 !important;
+        font-family: 'Arial Black', sans-serif;
+        font-size: 45px !important;
+        font-weight: 900;
+        margin-bottom: 0px !important;
+        text-transform: uppercase;
+    }
+    
+    .sub-title {
+        color: #1B3022;
+        font-size: 18px;
+        margin-bottom: 30px;
+    }
 
-.subtitle {
-    font-size: 18px;
-    color: #333333;
-    margin-bottom: 25px;
-}
+    /* Analyze Button Styling */
+    div.stButton > button {
+        background-color: #1B3022 !important;
+        color: white !important;
+        border-radius: 5px !important;
+        padding: 10px 40px !important;
+        font-size: 18px !important;
+        font-weight: bold;
+        border: none !important;
+        width: 100%;
+        margin-top: 10px;
+    }
 
-section[data-testid="stFileUploader"] {
-    max-width: 400px;
-    margin: auto;
-}
+    /* Result Box (White label) */
+    .result-label {
+        background-color: white;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        color: black;
+        font-weight: bold;
+        text-align: left;
+        margin-top: 20px;
+    }
 
-img {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
+    /* Measures Popup Box */
+    .measures-box {
+        background-color: #f8f9fa;
+        border-left: 5px solid #1B3022;
+        padding: 15px;
+        text-align: left;
+        margin-top: 15px;
+        border-radius: 4px;
+        color: #333;
+    }
 
-.stSuccess {
-    background-color: rgba(255,255,255,0.9) !important;
-    color: #111 !important;
-    font-weight: bold;
-    text-align: center;
-}
-
-.stWarning {
-    background-color: rgba(255,255,200,0.9) !important;
-    color: #222 !important;
-    font-weight: bold;
-    text-align: center;
-}
-
-header, footer {visibility: hidden;}
+    /* Hide Streamlit branding */
+    header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- UI ---
-st.markdown('<div class="title">Plant Disease Detection App</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Upload a plant leaf image to detect disease instantly.</div>', unsafe_allow_html=True)
+# --- UI HEADER ---
+st.markdown('<p class="main-title">PLANT DISEASE DETECTOR</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Please upload the image of the plant leaf for the analysis</p>', unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("Upload leaf image", type=["jpg", "jpeg", "png"])
+# --- FILE UPLOADER ---
+uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
 
-# --- AUTO PREDICTION ---
 if uploaded_file:
     image = Image.open(uploaded_file)
+    
+    # Display image exactly like the preview
+    st.image(image, use_container_width=True)
 
-    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-    st.image(image, width=300)
-    st.markdown("</div>", unsafe_allow_html=True)
+    # --- ANALYZE BUTTON ---
+    if st.button("ANALYZE"):
+        # Image Processing
+        img = image.resize((224, 224))
+        img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
 
-    # --- PROCESS IMAGE ---
-    img = image.resize((224, 224))
-    img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+        # Prediction
+        preds = model.predict(img_array)
+        result = class_names[np.argmax(preds)]
 
-    preds = model.predict(img_array)
-    result = class_names[np.argmax(preds)]
+        # 1. Show the Result box exactly as requested
+        st.markdown(f'<div class="result-label">Result = {result}</div>', unsafe_allow_html=True)
 
-    # --- HEALTH CHECK ---
-    if "healthy" in result.lower():
-        st.success("✅ The plant is Healthy")
-    else:
-        st.error(f"❌ Disease Detected: {result}")
-
-        # --- SHOW SOLUTION ---
-        if result in solutions:
-            st.warning(f"🌿 Treatment: {solutions[result]}")
+        # 2. Condition: If diseased, show measures
+        if "healthy" not in result.lower():
+            measure_text = solutions.get(result, "Apply general fungicide and remove infected parts.")
+            
+            st.markdown(f"""
+            <div class="measures-box">
+                <h4 style="margin-top:0; color:#1B3022;">⚠️ Recommended Measures:</h4>
+                <p>{measure_text}</p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.warning("Apply general fungicide and remove infected parts.")
+            st.balloons()
+            st.success("This plant is healthy!")
