@@ -12,98 +12,89 @@ MODEL_PATH = "plant_disease_model.h5"
 
 st.set_page_config(page_title="Crop Disease Detection", page_icon="🌿", layout="centered")
 
-# --- 2. CACHED MODEL LOADING ---
 @st.cache_resource
 def load_trained_model():
     if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
-        with st.spinner("🚀 Initializing System..."):
-            try:
-                opener = urllib.request.build_opener()
-                opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-                urllib.request.install_opener(opener)
-                urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
-            except Exception as e:
-                st.error(f"Error loading model: {e}")
-                return None
+        with st.spinner("🚀 Initializing..."):
+            opener = urllib.request.build_opener()
+            opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+            urllib.request.install_opener(opener)
+            urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
     return tf.keras.models.load_model(MODEL_PATH)
 
-# --- 3. CUSTOM CSS (EXACT REPLICATION) ---
+# --- 2. THE "EXACT LOOK" CSS ---
 st.markdown("""
     <style>
-    /* Background setup */
+    /* Background */
     .stApp {
         background-image: url("https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2026&auto=format&fit=crop");
         background-size: cover;
         background-position: center;
-        background-attachment: fixed;
     }
 
-    /* Main Dark Box Container */
+    /* The Main Container (Dark Box) */
     .main-box {
-        background-color: rgba(0, 0, 0, 0.82);
-        padding: 40px;
-        border-radius: 8px;
+        background-color: rgba(0, 0, 0, 0.85);
+        padding: 50px;
+        border-radius: 10px;
         color: white;
         text-align: center;
-        margin-top: 30px;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    /* Title Styling */
+    /* Title - No change, exactly like pic 1 */
     .header-text {
-        font-size: 38px;
-        font-weight: 500;
-        margin-bottom: 25px;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 42px;
+        font-weight: bold;
+        margin-bottom: 30px;
     }
 
-    /* Predict Button Styling */
-    div.stButton > button {
-        background-color: #388e3c !important;
-        color: white !important;
-        border-radius: 4px !important;
+    /* KILLING THE DEFAULT DRAG-AND-DROP DESIGN */
+    /* This section hides the "Drag and drop" text and the big gray border */
+    [data-testid="stFileUploadDropzone"] {
+        background-color: white !important;
+        color: black !important;
         border: none !important;
-        padding: 8px 20px !important;
-        font-size: 16px !important;
-        transition: 0.3s;
+        padding: 5px !important;
+        border-radius: 4px !important;
     }
     
-    div.stButton > button:hover {
-        background-color: #2e7d32 !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    [data-testid="stFileUploadDropzone"] div div {
+        display: none; /* Hides the 'Limit 200MB' and icon */
     }
 
-    /* Prediction Result Text */
-    .prediction-output {
-        font-size: 22px;
-        font-weight: bold;
-        margin-top: 25px;
+    /* Predict Button Styling - Vibrant Green */
+    div.stButton > button {
+        background-color: #28a745 !important;
+        color: white !important;
+        font-weight: bold !important;
+        border: none !important;
+        padding: 10px 20px !important;
+        font-size: 16px !important;
+        height: 45px;
     }
 
-    /* Management Card - Visible for diseased results */
+    /* Management Card styling */
     .mgmt-card {
-        background-color: #ffffff;
+        background-color: white;
         color: #1b5e20;
         text-align: left;
         padding: 20px;
-        border-radius: 6px;
-        margin-top: 25px;
-        border-left: 8px solid #c62828;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+        margin-top: 20px;
+        border-left: 10px solid #d32f2f;
     }
 
-    /* Minimalist Uploader Hide labels */
-    .stFileUploader label { display: none; }
-    
     footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. MAIN UI CONTENT ---
+# --- 3. UI LAYOUT ---
 
 st.markdown('<div class="main-box">', unsafe_allow_html=True)
 st.markdown('<div class="header-text">Crop Disease Detection</div>', unsafe_allow_html=True)
 
-# Model Loading
+# Loading model/classes
 model = load_trained_model()
 try:
     with open('class_indices.json', 'r') as f:
@@ -111,52 +102,51 @@ try:
 except:
     class_names = []
 
-# Action Row
-col_file, col_btn = st.columns([2, 1])
+# Action Row: Choose File and Predict Button
+col1, col2 = st.columns([2, 1])
 
-with col_file:
-    uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
+with col1:
+    # This now looks like a simple white "Choose File" button
+    uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
 
-with col_btn:
-    st.write("<br>", unsafe_allow_html=True) # Alignment spacing
+with col2:
+    # Aligns the button vertically with the uploader
+    st.markdown('<div style="height: 3px;"></div>', unsafe_allow_html=True)
     predict_clicked = st.button("Predict Leaf Disease")
 
-# Output Section
+# --- 4. PREDICTION & CONDITIONAL MGMT ---
 if uploaded_file:
     image = Image.open(uploaded_file)
-    st.markdown('<p style="font-size: 20px; margin-top:15px;">Original Image</p>', unsafe_allow_html=True)
-    st.image(image, width=350)
+    st.markdown('<p style="font-size: 20px; font-weight: bold; margin-top:20px;">Original Image</p>', unsafe_allow_html=True)
+    st.image(image, width=380)
     
     if predict_clicked:
-        with st.spinner("Processing..."):
-            # Image Preprocessing
-            img = image.resize((224, 224))
-            img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
-            img_array = np.expand_dims(img_array, axis=0)
-            
-            # Prediction
-            preds = model.predict(img_array)
-            result = class_names[np.argmax(preds)]
-            
-            # Display Prediction
-            st.markdown(f'<div class="prediction-output">Predicted Disease: {result}</div>', unsafe_allow_html=True)
+        # Preprocessing
+        img = image.resize((224, 224))
+        img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
+        
+        preds = model.predict(img_array)
+        result = class_names[np.argmax(preds)]
+        
+        # Result Text
+        st.markdown(f'<div style="font-size: 22px; font-weight: bold; margin-top: 20px;">Predicted Disease: {result}</div>', unsafe_allow_html=True)
 
-            # --- CONDITIONAL MANAGEMENT LOGIC ---
-            if "healthy" not in result.lower():
-                st.markdown(f"""
-                    <div class="mgmt-card">
-                        <h3 style="color: #c62828; margin-top: 0; font-size: 20px;">📋 Management Action Plan</h3>
-                        <p style="font-size: 15px;">Steps to treat <b>{result}</b>:</p>
-                        <ul style="line-height: 1.6; font-size: 14px;">
-                            <li><b>Sanitation:</b> Prune and burn infected foliage immediately.</li>
-                            <li><b>Treatment:</b> Apply appropriate organic fungicides (e.g., Copper or Sulfur).</li>
-                            <li><b>Prevention:</b> Improve air circulation and avoid overhead watering.</li>
-                            <li><b>Monitoring:</b> Inspect neighboring plants for early symptoms.</li>
-                        </ul>
-                    </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.balloons()
-                st.success("The crop is Healthy! No treatment required.")
+        # Management Logic
+        if "healthy" not in result.lower():
+            st.markdown(f"""
+                <div class="mgmt-card">
+                    <h3 style="color: #d32f2f; margin-top: 0;">🛡️ Management Measures</h3>
+                    <p>Since the crop is diagnosed with <b>{result}</b>, follow these steps:</p>
+                    <ul style="line-height: 1.6;">
+                        <li><b>Isolation:</b> Separate the plant to avoid spore spread.</li>
+                        <li><b>Pruning:</b> Cut off and safely discard infected leaves.</li>
+                        <li><b>Treatment:</b> Use a fungicide suitable for {result.split('___')[-1].replace('_', ' ')}.</li>
+                    </ul>
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.balloons()
+            st.success("Result: Healthy. No further management needed!")
 
 st.markdown('</div>', unsafe_allow_html=True)
