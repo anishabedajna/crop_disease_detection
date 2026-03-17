@@ -29,6 +29,25 @@ try:
 except:
     class_names = []
 
+# --- DISEASE SOLUTIONS ---
+solutions = {
+    "Tomato___Late_blight": [
+        "Remove infected leaves immediately",
+        "Apply fungicide like Mancozeb",
+        "Avoid overhead watering",
+    ],
+    "Tomato___Early_blight": [
+        "Use crop rotation",
+        "Apply copper-based fungicide",
+        "Remove affected leaves",
+    ],
+    "Potato___Late_blight": [
+        "Use certified seeds",
+        "Improve air circulation",
+        "Apply fungicide regularly",
+    ],
+}
+
 # --- CUSTOM CSS ---
 st.markdown("""
 <style>
@@ -41,7 +60,7 @@ st.markdown("""
     background-position: center;
 }
 
-/* Center content */
+/* Center everything */
 .block-container {
     text-align: center;
 }
@@ -50,50 +69,29 @@ st.markdown("""
 .title {
     font-size: 42px;
     font-weight: bold;
-    color: #1a1a1a;
-    margin-top: 30px;
+    color: #111;
+    margin-top: 10px;
+    text-decoration: underline;
 }
 
 /* Subtitle */
 .subtitle {
     font-size: 18px;
-    color: #333333;
-    margin-bottom: 25px;
+    color: #222;
+    margin-bottom: 20px;
 }
 
-/* File uploader label */
-label, .stFileUploader label {
-    color: #222222 !important;
-    font-weight: 600;
-}
-
-/* Smaller uploader */
+/* Uploader */
 section[data-testid="stFileUploader"] {
-    max-width: 400px;
+    max-width: 350px;
     margin: auto;
 }
 
-/* Drag box */
-section[data-testid="stFileUploader"] div {
-    font-size: 14px !important;
-    padding: 10px !important;
-}
-
-/* Center images */
+/* Image center */
 img {
     display: block;
     margin-left: auto;
     margin-right: auto;
-}
-
-/* Info box */
-.info-box {
-    background-color: rgba(255,255,255,0.75);
-    padding: 10px;
-    border-radius: 6px;
-    margin-top: 10px;
-    color: #222;
-    font-weight: 500;
 }
 
 /* Button */
@@ -104,21 +102,20 @@ div.stButton > button {
     border-radius: 6px;
 }
 
-/* Result styling */
-.stSuccess {
-    background-color: rgba(255,255,255,0.9) !important;
-    color: #111 !important;
+/* Result box */
+.result-box {
+    background-color: rgba(255,255,255,0.9);
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 15px;
+    color: #111;
     font-weight: bold;
-    border-radius: 6px;
-    text-align: center;
 }
 
-.stWarning {
-    background-color: rgba(255,255,200,0.9) !important;
-    color: #222 !important;
-    font-weight: bold;
-    border-radius: 6px;
-    text-align: center;
+/* Bullet text */
+ul {
+    text-align: left;
+    color: #222;
 }
 
 /* Hide header/footer */
@@ -127,30 +124,21 @@ header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- UI TEXT ---
+# --- UI ---
 st.markdown('<div class="title">Plant Disease Detection App</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Upload one or more plant leaf images to detect diseases.</div>', unsafe_allow_html=True)
 
-# --- FILE UPLOADER ---
-uploaded_file = st.file_uploader(
-    "Upload leaf image (jpg, jpeg, png)",
-    type=["jpg", "jpeg", "png"]
-)
+uploaded_file = st.file_uploader("Upload leaf image", type=["jpg", "jpeg", "png"])
 
-st.markdown('<div class="info-box">Please upload a plant leaf image to get started.</div>', unsafe_allow_html=True)
-
-predict_clicked = st.button("Detect Disease")
+analyze = st.button("Analyze")
 
 # --- PREDICTION ---
 if uploaded_file:
     image = Image.open(uploaded_file)
 
-    # Center image
-    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     st.image(image, width=300)
-    st.markdown("</div>", unsafe_allow_html=True)
 
-    if predict_clicked:
+    if analyze:
         img = image.resize((224, 224))
         img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
         img_array = np.expand_dims(img_array, axis=0)
@@ -158,9 +146,20 @@ if uploaded_file:
         preds = model.predict(img_array)
         result = class_names[np.argmax(preds)]
 
-        st.success(f"Prediction: {result}")
+        # --- HEALTH CHECK ---
+        if "healthy" in result.lower():
+            st.markdown(f'<div class="result-box">✅ This crop is Healthy</div>', unsafe_allow_html=True)
 
-        if "healthy" not in result.lower():
-            st.warning("Apply proper treatment and isolate the plant.")
         else:
-            st.success("Healthy leaf detected!")
+            st.markdown(f'<div class="result-box">❌ This crop is Diseased: {result}</div>', unsafe_allow_html=True)
+
+            # --- SOLUTIONS ---
+            if result in solutions:
+                st.markdown("### 🌿 Recommended Measures:")
+                for step in solutions[result]:
+                    st.markdown(f"- {step}")
+            else:
+                st.markdown("### 🌿 Recommended Measures:")
+                st.markdown("- Remove infected parts")
+                st.markdown("- Apply general fungicide")
+                st.markdown("- Keep plant in dry conditions")
