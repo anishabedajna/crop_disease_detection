@@ -68,26 +68,6 @@ st.markdown("""
     justify-content: center;
 }
 
-/* Title (moved up) */
-.title {
-    font-size: 42px;
-    font-weight: bold;
-    color: #111;
-    margin-top: -10px;
-    text-decoration: underline;
-    text-align: center;
-    width: 100%;
-}
-
-/* Subtitle */
-.subtitle {
-    font-size: 18px;
-    color: #222;
-    margin-top: 5px;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
 /* File uploader */
 section[data-testid="stFileUploader"] {
     max-width: 350px;
@@ -154,16 +134,25 @@ header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- UI ---
-st.markdown('<div class="title">Plant Disease Detection App</div>', unsafe_allow_html=True)
+# --- TITLE + SUBTITLE (FINAL SPACING FIX) ---
+st.markdown("""
+<div style="text-align: center; margin-top: -10px;">
+    
+    <h1 style="color:#111; text-decoration: underline; margin-bottom: 0px;">
+        Plant Disease Detection App
+    </h1>
 
-st.markdown(
-    '<div class="subtitle">A machine learning approach to detect plant crop diseases and take certain measures</div>',
-    unsafe_allow_html=True
-)
+    <p style="color:#222; font-size:18px; margin-top: 20px;">
+        A machine learning-based approach to detect plant crop diseases and recommend appropriate measures.
+    </p>
 
+</div>
+""", unsafe_allow_html=True)
+
+# --- FILE UPLOADER ---
 uploaded_file = st.file_uploader("Upload leaf image", type=["jpg", "jpeg", "png"])
 
+# --- BUTTON ---
 analyze = st.button("Analyze")
 
 # --- PREDICTION ---
