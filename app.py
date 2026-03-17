@@ -48,7 +48,7 @@ solutions = {
     ],
 }
 
-# --- CSS FIXED ---
+# --- CSS ---
 st.markdown("""
 <style>
 
@@ -60,14 +60,15 @@ st.markdown("""
     background-position: center;
 }
 
-/* Force center alignment properly */
+/* Center everything */
 .block-container {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
 }
 
-/* Title FIXED CENTER */
+/* Title */
 .title {
     font-size: 42px;
     font-weight: bold;
@@ -86,20 +87,33 @@ st.markdown("""
     text-align: center;
 }
 
-/* Uploader */
+/* File uploader */
 section[data-testid="stFileUploader"] {
     max-width: 350px;
     margin: auto;
+    text-align: center;
+}
+
+/* File name color */
+[data-testid="stFileUploaderFileName"] {
+    color: black !important;
+    font-weight: 600;
+    text-align: center;
 }
 
 /* Center image */
 img {
     display: block;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: auto !important;
+    margin-right: auto !important;
 }
 
-/* Button */
+/* Button center */
+div.stButton {
+    display: flex;
+    justify-content: center;
+}
+
 div.stButton > button {
     background-color: #2e7d32 !important;
     color: white !important;
@@ -118,7 +132,7 @@ div.stButton > button {
     text-align: center;
 }
 
-/* Measures heading FIXED BLACK */
+/* Measures title */
 .measures-title {
     color: #000000;
     font-weight: bold;
@@ -126,8 +140,9 @@ div.stButton > button {
     text-align: center;
 }
 
-/* Bullet text */
+/* Bullet points */
 ul {
+    display: inline-block;
     text-align: left;
     color: #222;
 }
@@ -150,7 +165,10 @@ analyze = st.button("Analyze")
 if uploaded_file:
     image = Image.open(uploaded_file)
 
+    # Center image
+    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     st.image(image, width=300)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if analyze:
         img = image.resize((224, 224))
@@ -162,10 +180,10 @@ if uploaded_file:
 
         if "healthy" in result.lower():
             st.markdown('<div class="result-box">✅ This crop is Healthy</div>', unsafe_allow_html=True)
+
         else:
             st.markdown(f'<div class="result-box">❌ This crop is Diseased: {result}</div>', unsafe_allow_html=True)
 
-            # --- MEASURES ---
             st.markdown('<div class="measures-title">🌿 Recommended Measures</div>', unsafe_allow_html=True)
 
             if result in solutions:
